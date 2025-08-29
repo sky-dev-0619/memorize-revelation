@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>외운다. 계시록 - 요한계시록 암기 학습</title>
+    <link rel="icon" type="image/png" href="resource/icon/open_book.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>외운다. 계시록</h1>
+            <p class="subtitle">요한계시록 전체 암기를 위한 학습 페이지</p>
+        </header>
+
+        <main class="main-content">
+            <!-- 저작권 안내 문구 -->
+            <div class="copyright-notice">
+                성경 본문은 저작권이 만료된 개역한글 성경을 사용하였습니다.
+            </div>
+            
+            <div class="controls">
+                <div class="range-selector">
+                    <div class="range-row">
+                        <label for="chapterStart">시작:</label>
+                        <select id="chapterStart">
+                        </select>
+                        <label for="verseStart">장</label>
+                        <select id="verseStart">
+                        </select>
+                        <span class="verse-label">절</span>
+                    </div>
+                    <div class="range-row">
+                        <label for="chapterEnd">끝:</label>
+                        <select id="chapterEnd">
+                        </select>
+                        <label for="verseEnd">장</label>
+                        <select id="verseEnd">
+                        </select>
+                        <span class="verse-label">절</span>
+                    </div>
+                </div>
+
+                <div class="difficulty-selector">
+                    <div class="difficulty-options">
+                        <div class="difficulty-option">
+                            <input type="radio" id="difficulty1" name="difficulty" value="1" checked>
+                            <label for="difficulty1">1단계<br><span class="difficulty-desc">기초 - 빈칸 15%</span></label>
+                        </div>
+                        <div class="difficulty-option">
+                            <input type="radio" id="difficulty2" name="difficulty" value="2">
+                            <label for="difficulty2">2단계<br><span class="difficulty-desc">초급 - 빈칸 25%</span></label>
+                        </div>
+                        <div class="difficulty-option">
+                            <input type="radio" id="difficulty3" name="difficulty" value="3">
+                            <label for="difficulty3">3단계<br><span class="difficulty-desc">중급 - 빈칸 40%</span></label>
+                        </div>
+                        <div class="difficulty-option">
+                            <input type="radio" id="difficulty4" name="difficulty" value="4">
+                            <label for="difficulty4">4단계<br><span class="difficulty-desc">고급 - 빈칸 60%</span></label>
+                        </div>
+                        <div class="difficulty-option">
+                            <input type="radio" id="difficulty5" name="difficulty" value="5">
+                            <label for="difficulty5">5단계<br><span class="difficulty-desc">최고급 - 빈칸 80%</span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="generateBtn" class="btn btn-primary">문제 생성</button>
+                    <button id="showAnswerBtn" class="btn btn-secondary" disabled>본문 확인</button>
+                    <button id="gradeBtn" class="btn btn-success" disabled>채점하기</button>
+                    <button id="retryBtn" class="btn btn-warning hidden" disabled>다시 문제풀기</button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <div id="questionArea" class="question-area hidden">
+                    <h2>빈칸 문제</h2>
+                    <div id="questionContent" class="question-content"></div>
+                </div>
+
+                <div id="answerArea" class="answer-area hidden">
+                    <h2>정답</h2>
+                    <div id="answerContent" class="answer-content"></div>
+                </div>
+
+                <div id="gradeArea" class="grade-area hidden">
+                    <h2>채점 결과</h2>
+                    <div id="gradeContent" class="grade-content"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 정답 팝업 모달 -->
+    <div id="answerModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>본문 확인</h2>
+                <button class="modal-close" onclick="closeAnswerModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modalAnswerContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAnswerModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 맨 위로 가기 버튼 -->
+    <button id="scrollToTopBtn" class="scroll-to-top hidden" title="맨 위로 가기">
+        <img src="resource/icon/arrow_up.png" alt="위로 가기" class="scroll-arrow">
+    </button>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

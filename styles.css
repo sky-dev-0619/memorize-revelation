@@ -324,6 +324,16 @@ body {
     box-shadow: 0 8px 25px rgba(253, 203, 110, 0.3);
 }
 
+.btn-info {
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    color: white;
+}
+
+.btn-info:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(116, 185, 255, 0.3);
+}
+
 /* 컨텐츠 영역 */
 .content-area {
     min-height: 400px;
@@ -782,7 +792,7 @@ body {
         min-width: 30px;
         max-width: calc(100vw - 40px);
         font-size: 16px;
-        padding: 2px 5px;
+        padding: 2px 2px;
         margin: 0 1px;
         height: 22px;
         line-height: 18px;

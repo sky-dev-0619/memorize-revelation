@@ -11,6 +11,7 @@ const verseEndSelect = document.getElementById('verseEnd');
 const generateBtn = document.getElementById('generateBtn');
 const showAnswerBtn = document.getElementById('showAnswerBtn');
 const gradeBtn = document.getElementById('gradeBtn');
+const clearBlanksBtn = document.getElementById('clearBlanksBtn');
 const retryBtn = document.getElementById('retryBtn');
 const questionArea = document.getElementById('questionArea');
 const answerArea = document.getElementById('answerArea');
@@ -36,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 버튼 초기 상태 설정
     showAnswerBtn.disabled = true;
     gradeBtn.disabled = true;
+    clearBlanksBtn.disabled = true;
     retryBtn.disabled = true;
     
     // 요한계시록 데이터 로드
@@ -80,6 +82,7 @@ function setupEventListeners() {
     generateBtn.addEventListener('click', generateQuestion);
     showAnswerBtn.addEventListener('click', showAnswer);
     gradeBtn.addEventListener('click', gradeAnswers);
+    clearBlanksBtn.addEventListener('click', clearAllBlanks);
     retryBtn.addEventListener('click', retryQuestion);
 }
 
@@ -204,6 +207,7 @@ function generateQuestion() {
     displayQuestion(currentQuestion);
     showAnswerBtn.disabled = false;
     gradeBtn.disabled = false;
+    clearBlanksBtn.disabled = false;
     
     // 영역 표시
     questionArea.classList.remove('hidden');
@@ -603,6 +607,38 @@ function retryQuestion() {
     // 채점 스타일만 제거하고 입력된 텍스트는 유지
     const inputs = document.querySelectorAll('.blank-input');
     inputs.forEach(input => {
+        input.classList.remove('correct', 'incorrect');
+    });
+    
+    // 절 클릭 기능 제거
+    const verses = document.querySelectorAll('.verse');
+    verses.forEach(verse => {
+        verse.classList.remove('clickable');
+        verse.removeEventListener('click', handleVerseClick);
+    });
+    
+    // 점수 표시 숨기기
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    if (scoreDisplay) {
+        scoreDisplay.classList.add('hidden');
+        scoreDisplay.classList.remove('perfect', 'incorrect');
+    }
+    
+    // 다시 문제풀기 버튼 숨기기
+    retryBtn.classList.add('hidden');
+    retryBtn.disabled = true;
+    
+    // 채점 영역 숨기기
+    gradeArea.classList.add('hidden');
+}
+
+function clearAllBlanks() {
+    if (!currentQuestion) return;
+    
+    // 모든 빈칸 입력 필드 초기화
+    const inputs = document.querySelectorAll('.blank-input');
+    inputs.forEach(input => {
+        input.value = '';
         input.classList.remove('correct', 'incorrect');
     });
     

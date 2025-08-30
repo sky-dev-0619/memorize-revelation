@@ -422,16 +422,20 @@ body {
     border-radius: 4px;
     font-size: 16px;
     height: 24px;
+    line-height: 20px;
     min-width: 40px;
     max-width: 100%;
     text-align: center;
     transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
     font-family: inherit;
-    vertical-align: baseline;
+    vertical-align: middle;
     display: inline-block;
     word-break: break-word;
     /* 한글 입력 시 레이아웃 시프트 방지 */
     box-sizing: border-box;
+    /* IME 조합 중 위치 안정화 */
+    position: relative;
+    top: 0;
 }
 
 .blank-input:focus {
@@ -781,7 +785,11 @@ body {
         padding: 1px 4px;
         margin: 0 1px;
         height: 20px;
+        line-height: 16px;
         word-break: break-all;
+        vertical-align: middle;
+        position: relative;
+        top: 0;
     }
     
     .question-header {

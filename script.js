@@ -1,5 +1,6 @@
 // 전역 변수
 let currentQuestion = null;
+let currentBlankTest = null;
 let userInputs = [];
 let previousRangeValues = {
     chapterStart: 1,
@@ -15,15 +16,18 @@ const chapterEndSelect = document.getElementById('chapterEnd');
 const verseEndSelect = document.getElementById('verseEnd');
 // Radio 버튼으로 변경됨 - 직접 선택된 값을 가져오는 함수 사용
 const generateBtn = document.getElementById('generateBtn');
+const blankTestBtn = document.getElementById('blankTestBtn');
 const showAnswerBtn = document.getElementById('showAnswerBtn');
 const gradeBtn = document.getElementById('gradeBtn');
 const clearBlanksBtn = document.getElementById('clearBlanksBtn');
 const retryBtn = document.getElementById('retryBtn');
 const questionArea = document.getElementById('questionArea');
+const blankTestArea = document.getElementById('blankTestArea');
 const answerArea = document.getElementById('answerArea');
 const gradeArea = document.getElementById('gradeArea');
 const scrollToTopBtn = document.getElementById('scrollToTopBtn');
 const questionContent = document.getElementById('questionContent');
+const blankTestContent = document.getElementById('blankTestContent');
 const answerContent = document.getElementById('answerContent');
 const gradeContent = document.getElementById('gradeContent');
 
@@ -31,6 +35,7 @@ const gradeContent = document.getElementById('gradeContent');
 document.addEventListener('DOMContentLoaded', async function() {
     // 초기 상태에서 모든 영역 숨기기
     questionArea.classList.add('hidden');
+    blankTestArea.classList.add('hidden');
     answerArea.classList.add('hidden');
     gradeArea.classList.add('hidden');
     
@@ -86,6 +91,7 @@ function setupEventListeners() {
     chapterEndSelect.addEventListener('change', handleRangeChange);
     verseEndSelect.addEventListener('change', handleRangeChange);
     generateBtn.addEventListener('click', generateQuestion);
+    blankTestBtn.addEventListener('click', generateBlankTest);
     showAnswerBtn.addEventListener('click', showAnswer);
     gradeBtn.addEventListener('click', gradeAnswers);
     clearBlanksBtn.addEventListener('click', clearAllBlanks);
@@ -237,6 +243,13 @@ function getSelectedDifficulty() {
     return checkedRadio ? parseInt(checkedRadio.value) : 1;
 }
 
+function clearDifficultySelection() {
+    const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+    difficultyRadios.forEach(radio => {
+        radio.checked = false;
+    });
+}
+
 function validateRange(startChapter, startVerse, endChapter, endVerse) {
     if (startChapter > endChapter) return false;
     if (startChapter === endChapter && startVerse > endVerse) return false;
@@ -280,13 +293,11 @@ function createBlankQuestion(verses, difficulty) {
     
     verses.forEach((verseData, verseIndex) => {
         const { chapter, verse, text } = verseData;
-        let processedText;
-        let blankInfo;
         
         // 1-5단계: 빈칸 생성 (전역 머지 ID 사용)
         const result = createBlanksInText(text, difficulty, globalMergedId);
-        processedText = result.text;
-        blankInfo = { blanks: result.blanks };
+        const processedText = result.text;
+        const blankInfo = { blanks: result.blanks };
         globalMergedId = result.nextMergedId; // 다음 머지 ID 업데이트
         
         question.verses.push({
@@ -373,6 +384,15 @@ function mergeConsecutiveBlanks(words, blanks, startMergedId = 0) {
                     inputWidth = Math.max(combinedAnswer.length * 14, 50) + 15;
                 }
                 
+                // 백지시험의 경우 더 넓은 입력 필드 제공
+                if (currentBlankGroup.length >= 5) {  // 5개 이상의 연속 단어면 백지시험으로 간주
+                    if (isMobile) {
+                        inputWidth = Math.min(window.innerWidth - 40, 300);
+                    } else {
+                        inputWidth = Math.min(combinedAnswer.length * 16, 500) + 30;
+                    }
+                }
+                
                 mergedBlanks.push({
                     id: currentMergedId,
                     answer: combinedAnswer,
@@ -427,15 +447,110 @@ function displayQuestion(question) {
     questionContent.innerHTML = html;
 }
 
+// 백지시험 생성 함수
+function generateBlankTest() {
+    const startChapter = parseInt(chapterStartSelect.value);
+    const startVerse = parseInt(verseStartSelect.value);
+    const endChapter = parseInt(chapterEndSelect.value);
+    const endVerse = parseInt(verseEndSelect.value);
+    
+    // 범위 검증
+    if (!validateRange(startChapter, startVerse, endChapter, endVerse)) {
+        alert('올바른 범위를 선택해주세요.');
+        return;
+    }
+    
+    // 난이도 선택 해제
+    clearDifficultySelection();
+    
+    // 범위 내 구절들 수집
+    const verses = collectVerses(startChapter, startVerse, endChapter, endVerse);
+    
+    // 백지시험 생성
+    currentBlankTest = createBlankTest(verses);
+    
+    // UI 업데이트
+    displayBlankTest(currentBlankTest);
+    showAnswerBtn.disabled = false;
+    gradeBtn.disabled = false;
+    clearBlanksBtn.disabled = false;
+    
+    // 영역 표시
+    blankTestArea.classList.remove('hidden');
+    questionArea.classList.add('hidden');
+    answerArea.classList.add('hidden');
+    gradeArea.classList.add('hidden');
+    
+    // 이전 채점 결과 초기화
+    resetGradingStyles();
+    
+    // 현재 범위 값을 이전 값으로 저장
+    updatePreviousRangeValues();
+    
+    // blankTestArea로 스크롤
+    setTimeout(() => {
+        blankTestArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+}
+
+function createBlankTest(verses) {
+    const blankTest = {
+        verses: [],
+        blanks: []
+    };
+    
+    verses.forEach((verseData, verseIndex) => {
+        const { chapter, verse, text } = verseData;
+        
+        // 백지시험: 완전한 입력 영역 제공
+        const processedText = `<textarea class="blank-test-input" data-blank-id="${verseIndex}" placeholder="여기에 ${chapter}:${verse} 구절을 입력하세요..."></textarea>`;
+        const blankInfo = { blanks: [{ id: verseIndex, answer: text, wordCount: text.split(' ').length }] };
+        
+        blankTest.verses.push({
+            chapter,
+            verse,
+            originalText: text,
+            processedText,
+            blankInfo
+        });
+    });
+    
+    return blankTest;
+}
+
+function displayBlankTest(blankTest) {
+    let html = '<div class="verses">';
+    
+    blankTest.verses.forEach(verseData => {
+        const { chapter, verse, processedText } = verseData;
+        
+        html += `
+            <div class="verse">
+                <span class="verse-number">${chapter}:${verse}</span>
+                <div class="verse-text">${processedText}</div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    blankTestContent.innerHTML = html;
+}
+
 function showAnswer() {
-    if (!currentQuestion) {
+    let verses = [];
+    
+    if (currentQuestion) {
+        verses = currentQuestion.verses;
+    } else if (currentBlankTest) {
+        verses = currentBlankTest.verses;
+    } else {
         alert('먼저 문제를 생성해주세요.');
         return;
     }
     
     let html = '<div class="verses">';
     
-    currentQuestion.verses.forEach(verseData => {
+    verses.forEach(verseData => {
         const { chapter, verse, originalText } = verseData;
         html += `
             <div class="verse">
@@ -453,52 +568,95 @@ function showAnswer() {
 }
 
 function gradeAnswers() {
-    if (!currentQuestion) return;
-    
     let totalBlanks = 0;
     let correctAnswers = 0;
     let results = [];
     
-    // 1-5단계: 빈칸 채점
-    const inputs = document.querySelectorAll('.blank-input');
-    inputs.forEach(input => {
-        const blankId = parseInt(input.dataset.blankId);
-        const userInput = input.value.trim();
-        
-        // 해당 빈칸의 정답 찾기
-        let correctAnswer = '';
-        
-        currentQuestion.verses.forEach(verseData => {
-            if (verseData.blankInfo && verseData.blankInfo.blanks) {
-                const blank = verseData.blankInfo.blanks.find(b => b.id === blankId);
-                if (blank) {
-                    correctAnswer = blank.answer;
+    if (currentBlankTest) {
+        // 백지시험 채점
+        const textareas = document.querySelectorAll('.blank-test-input');
+        textareas.forEach(textarea => {
+            const blankId = parseInt(textarea.dataset.blankId);
+            const userInput = textarea.value.trim();
+            
+            // 해당 빈칸의 정답 찾기
+            let correctAnswer = '';
+            
+            currentBlankTest.verses.forEach(verseData => {
+                if (verseData.blankInfo && verseData.blankInfo.blanks) {
+                    const blank = verseData.blankInfo.blanks.find(b => b.id === blankId);
+                    if (blank) {
+                        correctAnswer = blank.answer;
+                    }
                 }
+            });
+            
+            totalBlanks += 1;
+            const isCorrect = compareTexts(userInput, correctAnswer);
+            if (isCorrect) correctAnswers += 1;
+            
+            // 텍스트 영역에 정답/오답 스타일 적용
+            textarea.classList.remove('correct', 'incorrect');
+            if (isCorrect) {
+                textarea.classList.add('correct');
+            } else {
+                textarea.classList.add('incorrect');
             }
+            
+            results.push({
+                userInput,
+                correctAnswer,
+                isCorrect
+            });
         });
         
-        // 사용자에게 보여지는 input 박스 개수로 계산 (각 input당 1개)
-        totalBlanks += 1;
-        const isCorrect = compareTexts(userInput, correctAnswer);
-        if (isCorrect) correctAnswers += 1;
-        
-        // 빈칸에 정답/오답 스타일 적용
-        input.classList.remove('correct', 'incorrect');
-        if (isCorrect) {
-            input.classList.add('correct');
-        } else {
-            input.classList.add('incorrect');
-        }
-        
-        results.push({
-            userInput,
-            correctAnswer,
-            isCorrect
+        // 백지시험 점수 표시 업데이트
+        updateBlankTestScoreDisplay(correctAnswers, totalBlanks);
+    } else if (currentQuestion) {
+        // 1-5단계: 빈칸 채점
+        const inputs = document.querySelectorAll('.blank-input');
+        inputs.forEach(input => {
+            const blankId = parseInt(input.dataset.blankId);
+            const userInput = input.value.trim();
+            
+            // 해당 빈칸의 정답 찾기
+            let correctAnswer = '';
+            
+            currentQuestion.verses.forEach(verseData => {
+                if (verseData.blankInfo && verseData.blankInfo.blanks) {
+                    const blank = verseData.blankInfo.blanks.find(b => b.id === blankId);
+                    if (blank) {
+                        correctAnswer = blank.answer;
+                    }
+                }
+            });
+            
+            // 사용자에게 보여지는 input 박스 개수로 계산 (각 input당 1개)
+            totalBlanks += 1;
+            const isCorrect = compareTexts(userInput, correctAnswer);
+            if (isCorrect) correctAnswers += 1;
+            
+            // 빈칸에 정답/오답 스타일 적용
+            input.classList.remove('correct', 'incorrect');
+            if (isCorrect) {
+                input.classList.add('correct');
+            } else {
+                input.classList.add('incorrect');
+            }
+            
+            results.push({
+                userInput,
+                correctAnswer,
+                isCorrect
+            });
         });
-    });
-    
-    // 점수 표시 업데이트
-    updateScoreDisplay(correctAnswers, totalBlanks);
+        
+        // 빈칸문제 점수 표시 업데이트
+        updateScoreDisplay(correctAnswers, totalBlanks);
+    } else {
+        alert('먼저 문제를 생성해주세요.');
+        return;
+    }
     
     // 채점 후 절별 클릭 기능 활성화
     enableVerseClickToShowAnswer();
@@ -510,6 +668,27 @@ function gradeAnswers() {
 
 function updateScoreDisplay(correctAnswers, totalBlanks) {
     const scoreDisplay = document.getElementById('scoreDisplay');
+    if (!scoreDisplay) return;
+    
+    // 점수 텍스트 설정
+    scoreDisplay.textContent = `${correctAnswers}/${totalBlanks}`;
+    
+    // 스타일 클래스 제거
+    scoreDisplay.classList.remove('perfect', 'incorrect');
+    
+    // 점수에 따른 스타일 적용
+    if (correctAnswers === totalBlanks) {
+        scoreDisplay.classList.add('perfect');
+    } else {
+        scoreDisplay.classList.add('incorrect');
+    }
+    
+    // 점수 표시 영역 보이기
+    scoreDisplay.classList.remove('hidden');
+}
+
+function updateBlankTestScoreDisplay(correctAnswers, totalBlanks) {
+    const scoreDisplay = document.getElementById('blankTestScoreDisplay');
     if (!scoreDisplay) return;
     
     // 점수 텍스트 설정
@@ -555,14 +734,19 @@ function handleVerseClick(event) {
     const verse = event.currentTarget;
     const verseNumber = verse.querySelector('.verse-number');
     
-    if (!verseNumber || !currentQuestion) return;
+    if (!verseNumber) return;
     
     // 절 번호에서 장:절 정보 추출
     const verseText = verseNumber.textContent;
     const [chapter, verseNum] = verseText.split(':').map(num => parseInt(num));
     
     // 해당 절의 원본 텍스트 찾기
-    const verseData = currentQuestion.verses.find(v => v.chapter === chapter && v.verse === verseNum);
+    let verseData = null;
+    if (currentQuestion) {
+        verseData = currentQuestion.verses.find(v => v.chapter === chapter && v.verse === verseNum);
+    } else if (currentBlankTest) {
+        verseData = currentBlankTest.verses.find(v => v.chapter === chapter && v.verse === verseNum);
+    }
     
     if (verseData) {
         showVerseAnswer(chapter, verseNum, verseData.originalText);
@@ -591,6 +775,12 @@ function resetGradingStyles() {
         input.classList.remove('correct', 'incorrect');
     });
     
+    // 백지시험 텍스트 영역의 정답/오답 스타일 제거
+    const textareas = document.querySelectorAll('.blank-test-input');
+    textareas.forEach(textarea => {
+        textarea.classList.remove('correct', 'incorrect');
+    });
+    
     // 모든 절의 클릭 가능 스타일 제거
     const verses = document.querySelectorAll('.verse');
     verses.forEach(verse => {
@@ -605,19 +795,47 @@ function resetGradingStyles() {
         scoreDisplay.classList.remove('perfect', 'incorrect');
     }
     
+    const blankTestScoreDisplay = document.getElementById('blankTestScoreDisplay');
+    if (blankTestScoreDisplay) {
+        blankTestScoreDisplay.classList.add('hidden');
+        blankTestScoreDisplay.classList.remove('perfect', 'incorrect');
+    }
+    
     // 다시 문제풀기 버튼 숨기기
     retryBtn.classList.add('hidden');
     retryBtn.disabled = true;
 }
 
 function retryQuestion() {
-    if (!currentQuestion) return;
-    
-    // 채점 스타일만 제거하고 입력된 텍스트는 유지
-    const inputs = document.querySelectorAll('.blank-input');
-    inputs.forEach(input => {
-        input.classList.remove('correct', 'incorrect');
-    });
+    if (currentBlankTest) {
+        // 백지시험: 채점 스타일만 제거하고 입력된 텍스트는 유지
+        const textareas = document.querySelectorAll('.blank-test-input');
+        textareas.forEach(textarea => {
+            textarea.classList.remove('correct', 'incorrect');
+        });
+        
+        // 백지시험 점수 표시 숨기기
+        const blankTestScoreDisplay = document.getElementById('blankTestScoreDisplay');
+        if (blankTestScoreDisplay) {
+            blankTestScoreDisplay.classList.add('hidden');
+            blankTestScoreDisplay.classList.remove('perfect', 'incorrect');
+        }
+    } else if (currentQuestion) {
+        // 일반 빈칸: 채점 스타일만 제거하고 입력된 텍스트는 유지
+        const inputs = document.querySelectorAll('.blank-input');
+        inputs.forEach(input => {
+            input.classList.remove('correct', 'incorrect');
+        });
+        
+        // 빈칸문제 점수 표시 숨기기
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        if (scoreDisplay) {
+            scoreDisplay.classList.add('hidden');
+            scoreDisplay.classList.remove('perfect', 'incorrect');
+        }
+    } else {
+        return;
+    }
     
     // 절 클릭 기능 제거
     const verses = document.querySelectorAll('.verse');
@@ -625,13 +843,6 @@ function retryQuestion() {
         verse.classList.remove('clickable');
         verse.removeEventListener('click', handleVerseClick);
     });
-    
-    // 점수 표시 숨기기
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    if (scoreDisplay) {
-        scoreDisplay.classList.add('hidden');
-        scoreDisplay.classList.remove('perfect', 'incorrect');
-    }
     
     // 다시 문제풀기 버튼 숨기기
     retryBtn.classList.add('hidden');
@@ -642,14 +853,37 @@ function retryQuestion() {
 }
 
 function clearAllBlanks() {
-    if (!currentQuestion) return;
-    
-    // 모든 빈칸 입력 필드 초기화
-    const inputs = document.querySelectorAll('.blank-input');
-    inputs.forEach(input => {
-        input.value = '';
-        input.classList.remove('correct', 'incorrect');
-    });
+    if (currentBlankTest) {
+        // 백지시험: 텍스트 영역 초기화
+        const textareas = document.querySelectorAll('.blank-test-input');
+        textareas.forEach(textarea => {
+            textarea.value = '';
+            textarea.classList.remove('correct', 'incorrect');
+        });
+        
+        // 백지시험 점수 표시 숨기기
+        const blankTestScoreDisplay = document.getElementById('blankTestScoreDisplay');
+        if (blankTestScoreDisplay) {
+            blankTestScoreDisplay.classList.add('hidden');
+            blankTestScoreDisplay.classList.remove('perfect', 'incorrect');
+        }
+    } else if (currentQuestion) {
+        // 일반 빈칸: 입력 필드 초기화
+        const inputs = document.querySelectorAll('.blank-input');
+        inputs.forEach(input => {
+            input.value = '';
+            input.classList.remove('correct', 'incorrect');
+        });
+        
+        // 빈칸문제 점수 표시 숨기기
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        if (scoreDisplay) {
+            scoreDisplay.classList.add('hidden');
+            scoreDisplay.classList.remove('perfect', 'incorrect');
+        }
+    } else {
+        return;
+    }
     
     // 절 클릭 기능 제거
     const verses = document.querySelectorAll('.verse');
@@ -657,13 +891,6 @@ function clearAllBlanks() {
         verse.classList.remove('clickable');
         verse.removeEventListener('click', handleVerseClick);
     });
-    
-    // 점수 표시 숨기기
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    if (scoreDisplay) {
-        scoreDisplay.classList.add('hidden');
-        scoreDisplay.classList.remove('perfect', 'incorrect');
-    }
     
     // 다시 문제풀기 버튼 숨기기
     retryBtn.classList.add('hidden');
@@ -675,7 +902,10 @@ function clearAllBlanks() {
 
 function handleRangeChange(event) {
     // 문제가 생성된 상태인지 확인
-    if (currentQuestion && !questionArea.classList.contains('hidden')) {
+    const hasActiveQuestion = (currentQuestion && !questionArea.classList.contains('hidden')) || 
+                             (currentBlankTest && !blankTestArea.classList.contains('hidden'));
+    
+    if (hasActiveQuestion) {
         // 범위 재설정 확인 팝업
         if (confirm('범위를 재설정하시겠습니까? 현재 문제가 초기화됩니다.')) {
             resetToInitialState();
@@ -720,9 +950,11 @@ function restorePreviousRangeValues() {
 function resetToInitialState() {
     // 현재 문제 초기화
     currentQuestion = null;
+    currentBlankTest = null;
     
     // 모든 영역 숨기기
     questionArea.classList.add('hidden');
+    blankTestArea.classList.add('hidden');
     answerArea.classList.add('hidden');
     gradeArea.classList.add('hidden');
     
@@ -738,6 +970,12 @@ function resetToInitialState() {
     if (scoreDisplay) {
         scoreDisplay.classList.add('hidden');
         scoreDisplay.classList.remove('perfect', 'incorrect');
+    }
+    
+    const blankTestScoreDisplay = document.getElementById('blankTestScoreDisplay');
+    if (blankTestScoreDisplay) {
+        blankTestScoreDisplay.classList.add('hidden');
+        blankTestScoreDisplay.classList.remove('perfect', 'incorrect');
     }
     
     // 모달 닫기

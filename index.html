@@ -68,7 +68,8 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button id="generateBtn" class="btn btn-primary">문제 생성</button>
+                    <button id="generateBtn" class="btn btn-primary">빈칸문제 생성</button>
+                    <button id="blankTestBtn" class="btn btn-primary">백지시험 생성</button>
                     <button id="showAnswerBtn" class="btn btn-secondary" disabled>본문 확인</button>
                     <button id="gradeBtn" class="btn btn-success" disabled>채점하기</button>
                     <button id="clearBlanksBtn" class="btn btn-info" disabled>빈칸 초기화</button>
@@ -83,6 +84,14 @@
                         <div id="scoreDisplay" class="score-display hidden"></div>
                     </div>
                     <div id="questionContent" class="question-content"></div>
+                </div>
+
+                <div id="blankTestArea" class="blank-test-area hidden">
+                    <div class="question-header">
+                        <h2>백지시험</h2>
+                        <div id="blankTestScoreDisplay" class="score-display hidden"></div>
+                    </div>
+                    <div id="blankTestContent" class="question-content"></div>
                 </div>
 
                 <div id="answerArea" class="answer-area hidden">

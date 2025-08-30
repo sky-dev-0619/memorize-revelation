@@ -346,9 +346,9 @@ function mergeConsecutiveBlanks(words, blanks, startMergedId = 0) {
                 
                 let inputWidth;
                 if (isMobile) {
-                    // 모바일에서는 화면 너비를 고려한 최대 크기 설정
+                    // 모바일에서는 한글 입력 시 레이아웃 변화를 방지하기 위해 여유 있는 크기로 설정
                     const maxMobileWidth = Math.min(window.innerWidth - 80, 300);
-                    inputWidth = Math.min(combinedAnswer.length * 12 + 20, maxMobileWidth);
+                    inputWidth = Math.min(combinedAnswer.length * 16 + 40, maxMobileWidth);
                 } else {
                     // PC에서는 기존 로직 유지
                     inputWidth = Math.max(combinedAnswer.length * 16, 60) + 30;

@@ -425,14 +425,13 @@ body {
     min-width: 40px;
     max-width: 100%;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
     font-family: inherit;
     vertical-align: baseline;
     display: inline-block;
     word-break: break-word;
-    /* 모바일 키보드 스크롤 방지 */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    /* 한글 입력 시 레이아웃 시프트 방지 */
+    box-sizing: border-box;
 }
 
 .blank-input:focus {

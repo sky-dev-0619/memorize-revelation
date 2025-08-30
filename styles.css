@@ -428,7 +428,7 @@ body {
     text-align: center;
     transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
     font-family: inherit;
-    vertical-align: middle;
+    vertical-align: baseline;
     display: inline-block;
     word-break: break-word;
     /* 한글 입력 시 레이아웃 시프트 방지 */
@@ -787,7 +787,7 @@ body {
         height: 22px;
         line-height: 18px;
         word-break: break-all;
-        vertical-align: middle;
+        vertical-align: baseline;
         position: relative;
         top: 0;
     }

@@ -448,25 +448,20 @@ function gradeAnswers() {
         
         // 해당 빈칸의 정답 찾기
         let correctAnswer = '';
-        let wordCount = 1;
         
         currentQuestion.verses.forEach(verseData => {
             if (verseData.blankInfo && verseData.blankInfo.blanks) {
                 const blank = verseData.blankInfo.blanks.find(b => b.id === blankId);
                 if (blank) {
                     correctAnswer = blank.answer;
-                    wordCount = blank.wordCount || 1;
                 }
             }
         });
         
-        totalBlanks += wordCount;
+        // 사용자에게 보여지는 input 박스 개수로 계산 (각 input당 1개)
+        totalBlanks += 1;
         const isCorrect = compareTexts(userInput, correctAnswer);
-        if (isCorrect) correctAnswers += wordCount;
-        
-
-        
-
+        if (isCorrect) correctAnswers += 1;
         
         // 빈칸에 정답/오답 스타일 적용
         input.classList.remove('correct', 'incorrect');
@@ -479,8 +474,7 @@ function gradeAnswers() {
         results.push({
             userInput,
             correctAnswer,
-            isCorrect,
-            wordCount
+            isCorrect
         });
     });
     

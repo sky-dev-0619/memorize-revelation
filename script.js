@@ -52,6 +52,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 스크롤 투 탑 버튼 이벤트 리스너
     setupScrollToTopButton();
+    
+    // 모바일 키보드 스크롤 방지 설정
+    setupMobileKeyboardHandlers();
 });
 
 function initializeSelectors() {
@@ -482,12 +485,36 @@ function gradeAnswers() {
         });
     });
     
+    // 점수 표시 업데이트
+    updateScoreDisplay(correctAnswers, totalBlanks);
+    
     // 채점 후 절별 클릭 기능 활성화
     enableVerseClickToShowAnswer();
     
     // 다시 문제풀기 버튼 활성화
     retryBtn.classList.remove('hidden');
     retryBtn.disabled = false;
+}
+
+function updateScoreDisplay(correctAnswers, totalBlanks) {
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    if (!scoreDisplay) return;
+    
+    // 점수 텍스트 설정
+    scoreDisplay.textContent = `${correctAnswers}/${totalBlanks}`;
+    
+    // 스타일 클래스 제거
+    scoreDisplay.classList.remove('perfect', 'incorrect');
+    
+    // 점수에 따른 스타일 적용
+    if (correctAnswers === totalBlanks) {
+        scoreDisplay.classList.add('perfect');
+    } else {
+        scoreDisplay.classList.add('incorrect');
+    }
+    
+    // 점수 표시 영역 보이기
+    scoreDisplay.classList.remove('hidden');
 }
 
 function compareTexts(userInput, correctAnswer) {
@@ -559,6 +586,13 @@ function resetGradingStyles() {
         verse.removeEventListener('click', handleVerseClick);
     });
     
+    // 점수 표시 숨기기
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    if (scoreDisplay) {
+        scoreDisplay.classList.add('hidden');
+        scoreDisplay.classList.remove('perfect', 'incorrect');
+    }
+    
     // 다시 문제풀기 버튼 숨기기
     retryBtn.classList.add('hidden');
     retryBtn.disabled = true;
@@ -579,6 +613,13 @@ function retryQuestion() {
         verse.classList.remove('clickable');
         verse.removeEventListener('click', handleVerseClick);
     });
+    
+    // 점수 표시 숨기기
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    if (scoreDisplay) {
+        scoreDisplay.classList.add('hidden');
+        scoreDisplay.classList.remove('perfect', 'incorrect');
+    }
     
     // 다시 문제풀기 버튼 숨기기
     retryBtn.classList.add('hidden');
@@ -629,5 +670,87 @@ function setupScrollToTopButton() {
             top: 0,
             behavior: 'smooth'
         });
+    });
+}
+
+// 모바일 키보드 스크롤 방지 함수들
+function setupMobileKeyboardHandlers() {
+    let originalScrollTop = 0;
+    let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    let isAndroid = /Android/.test(navigator.userAgent);
+    
+    // 모바일 환경에서만 실행
+    if (!isIOS && !isAndroid) return;
+    
+    // 뷰포트 높이 변화 감지 (키보드 온오프)
+    let initialViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    
+    function handleViewportChange() {
+        if (window.visualViewport) {
+            const currentHeight = window.visualViewport.height;
+            const heightDifference = initialViewportHeight - currentHeight;
+            
+            if (heightDifference > 150) { // 키보드가 올라온 상태
+                document.body.classList.add('keyboard-active');
+            } else { // 키보드가 내려간 상태
+                document.body.classList.remove('keyboard-active');
+            }
+        }
+    }
+    
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', handleViewportChange);
+    }
+    
+    // Input 포커스 처리
+    function handleInputFocus(event) {
+        if (event.target.classList.contains('blank-input')) {
+            originalScrollTop = window.pageYOffset;
+            
+            setTimeout(() => {
+                if (isIOS) {
+                    // iOS에서 스크롤 위치 고정
+                    document.body.style.position = 'fixed';
+                    document.body.style.top = `-${originalScrollTop}px`;
+                    document.body.style.width = '100%';
+                }
+                
+                // 입력 필드가 화면에 보이도록 스크롤 조정
+                const inputRect = event.target.getBoundingClientRect();
+                const keyboardHeight = isIOS ? 300 : 250; // 추정 키보드 높이
+                const availableHeight = window.innerHeight - keyboardHeight;
+                
+                if (inputRect.bottom > availableHeight) {
+                    const scrollAmount = inputRect.bottom - availableHeight + 20;
+                    window.scrollBy(0, scrollAmount);
+                }
+            }, 100);
+        }
+    }
+    
+    function handleInputBlur(event) {
+        if (event.target.classList.contains('blank-input')) {
+            setTimeout(() => {
+                if (isIOS) {
+                    // iOS에서 스크롤 위치 복원
+                    document.body.style.position = '';
+                    document.body.style.top = '';
+                    document.body.style.width = '';
+                    window.scrollTo(0, originalScrollTop);
+                }
+                document.body.classList.remove('keyboard-active');
+            }, 100);
+        }
+    }
+    
+    // 이벤트 위임 사용
+    document.addEventListener('focusin', handleInputFocus);
+    document.addEventListener('focusout', handleInputBlur);
+    
+    // 화면 회전 처리
+    window.addEventListener('orientationchange', function() {
+        setTimeout(() => {
+            initialViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        }, 500);
     });
 }

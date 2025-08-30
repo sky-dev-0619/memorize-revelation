@@ -775,17 +775,17 @@ body {
     }
     
     .verse-text {
-        font-size: 15px;
+        font-size: 16px;
     }
     
     .blank-input {
         min-width: 30px;
         max-width: calc(100vw - 40px);
-        font-size: 14px;
-        padding: 1px 4px;
+        font-size: 16px;
+        padding: 2px 5px;
         margin: 0 1px;
-        height: 20px;
-        line-height: 16px;
+        height: 22px;
+        line-height: 18px;
         word-break: break-all;
         vertical-align: middle;
         position: relative;
@@ -820,7 +820,7 @@ body {
     }
     
     .verse-text {
-        font-size: 14px;
+        font-size: 15px;
     }
     
     .blank-textarea {

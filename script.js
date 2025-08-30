@@ -1,6 +1,12 @@
 // 전역 변수
 let currentQuestion = null;
 let userInputs = [];
+let previousRangeValues = {
+    chapterStart: 1,
+    verseStart: 1,
+    chapterEnd: 1,
+    verseEnd: 1
+};
 
 // DOM 요소들
 const chapterStartSelect = document.getElementById('chapterStart');
@@ -75,10 +81,10 @@ function initializeSelectors() {
 }
 
 function setupEventListeners() {
-    chapterStartSelect.addEventListener('change', updateStartVerseSelector);
-    verseStartSelect.addEventListener('change', updateEndRangeOptions);
-    chapterEndSelect.addEventListener('change', updateEndVerseForRange);
-    verseEndSelect.addEventListener('change', validateEndRange);
+    chapterStartSelect.addEventListener('change', handleRangeChange);
+    verseStartSelect.addEventListener('change', handleRangeChange);
+    chapterEndSelect.addEventListener('change', handleRangeChange);
+    verseEndSelect.addEventListener('change', handleRangeChange);
     generateBtn.addEventListener('click', generateQuestion);
     showAnswerBtn.addEventListener('click', showAnswer);
     gradeBtn.addEventListener('click', gradeAnswers);
@@ -216,6 +222,9 @@ function generateQuestion() {
     
     // 이전 채점 결과 초기화
     resetGradingStyles();
+    
+    // 현재 범위 값을 이전 값으로 저장
+    updatePreviousRangeValues();
     
     // questionArea로 스크롤
     setTimeout(() => {
@@ -662,6 +671,80 @@ function clearAllBlanks() {
     
     // 채점 영역 숨기기
     gradeArea.classList.add('hidden');
+}
+
+function handleRangeChange(event) {
+    // 문제가 생성된 상태인지 확인
+    if (currentQuestion && !questionArea.classList.contains('hidden')) {
+        // 범위 재설정 확인 팝업
+        if (confirm('범위를 재설정하시겠습니까? 현재 문제가 초기화됩니다.')) {
+            resetToInitialState();
+            // 새로운 값으로 업데이트
+            updatePreviousRangeValues();
+        } else {
+            // 취소한 경우 이전 값으로 되돌리기
+            restorePreviousRangeValues();
+            return;
+        }
+    } else {
+        // 문제가 없는 상태에서는 정상적으로 업데이트
+        updatePreviousRangeValues();
+    }
+    
+    // 범위 변경에 따른 기존 로직 실행
+    if (event.target === chapterStartSelect) {
+        updateStartVerseSelector();
+    } else if (event.target === verseStartSelect) {
+        updateEndRangeOptions();
+    } else if (event.target === chapterEndSelect) {
+        updateEndVerseForRange();
+    } else if (event.target === verseEndSelect) {
+        validateEndRange();
+    }
+}
+
+function updatePreviousRangeValues() {
+    previousRangeValues.chapterStart = parseInt(chapterStartSelect.value) || 1;
+    previousRangeValues.verseStart = parseInt(verseStartSelect.value) || 1;
+    previousRangeValues.chapterEnd = parseInt(chapterEndSelect.value) || 1;
+    previousRangeValues.verseEnd = parseInt(verseEndSelect.value) || 1;
+}
+
+function restorePreviousRangeValues() {
+    chapterStartSelect.value = previousRangeValues.chapterStart;
+    verseStartSelect.value = previousRangeValues.verseStart;
+    chapterEndSelect.value = previousRangeValues.chapterEnd;
+    verseEndSelect.value = previousRangeValues.verseEnd;
+}
+
+function resetToInitialState() {
+    // 현재 문제 초기화
+    currentQuestion = null;
+    
+    // 모든 영역 숨기기
+    questionArea.classList.add('hidden');
+    answerArea.classList.add('hidden');
+    gradeArea.classList.add('hidden');
+    
+    // 버튼 상태 초기화
+    showAnswerBtn.disabled = true;
+    gradeBtn.disabled = true;
+    clearBlanksBtn.disabled = true;
+    retryBtn.disabled = true;
+    retryBtn.classList.add('hidden');
+    
+    // 점수 표시 숨기기
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    if (scoreDisplay) {
+        scoreDisplay.classList.add('hidden');
+        scoreDisplay.classList.remove('perfect', 'incorrect');
+    }
+    
+    // 모달 닫기
+    const modal = document.getElementById('answerModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
 }
 
 

@@ -352,12 +352,12 @@ function mergeConsecutiveBlanks(words, blanks, startMergedId = 0) {
                 
                 let inputWidth;
                 if (isMobile) {
-                    // 모바일에서는 한글 입력 시 레이아웃 변화를 방지하기 위해 여유 있는 크기로 설정
-                    const maxMobileWidth = Math.min(window.innerWidth - 80, 300);
-                    inputWidth = Math.min(combinedAnswer.length * 16 + 40, maxMobileWidth);
+                    // 모바일에서는 더 타이트한 크기로 설정
+                    const maxMobileWidth = Math.min(window.innerWidth - 80, 250);
+                    inputWidth = Math.min(combinedAnswer.length * 12 + 20, maxMobileWidth);
                 } else {
-                    // PC에서는 기존 로직 유지
-                    inputWidth = Math.max(combinedAnswer.length * 16, 60) + 30;
+                    // PC에서는 더 타이트한 크기로 설정
+                    inputWidth = Math.max(combinedAnswer.length * 14, 50) + 15;
                 }
                 
                 mergedBlanks.push({

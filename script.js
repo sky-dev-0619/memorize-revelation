@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 스크롤 투 탑 버튼 이벤트 리스너
     setupScrollToTopButton();
     
-
+    // 페이지 reload 시 최상단으로 이동
+    setupPageReloadHandler();
 });
 
 function initializeSelectors() {
@@ -211,6 +212,11 @@ function generateQuestion() {
     
     // 이전 채점 결과 초기화
     resetGradingStyles();
+    
+    // questionArea로 스크롤
+    setTimeout(() => {
+        questionArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
 }
 
 function getSelectedDifficulty() {
@@ -627,6 +633,19 @@ function retryQuestion() {
 // 모달 관련 함수들
 function closeAnswerModal() {
     document.getElementById('answerModal').classList.add('hidden');
+}
+
+function setupPageReloadHandler() {
+    // 페이지 새로고침 시 스크롤 위치를 최상단으로 설정
+    window.addEventListener('beforeunload', function() {
+        window.scrollTo(0, 0);
+    });
+    
+    // 페이지 로드 시에도 최상단으로 설정 (브라우저가 이전 위치를 기억하는 경우 대비)
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
 }
 
 // 모달 관련 이벤트 리스너 설정

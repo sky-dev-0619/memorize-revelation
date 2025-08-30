@@ -924,50 +924,7 @@ body {
     }
 }
 
-/* 모바일 키보드 스크롤 방지 */
-@supports (-webkit-touch-callout: none) {
-    /* iOS Safari */
-    body.keyboard-active {
-        position: fixed;
-        width: 100%;
-    }
-    
-    .blank-input {
-        -webkit-user-select: text;
-        -webkit-appearance: none;
-        zoom: 1;
-    }
-}
 
-/* Android 모바일 브라우저 */
-@media screen and (max-device-width: 767px) {
-    html {
-        position: relative;
-        overflow-x: hidden;
-    }
-    
-    body {
-        -webkit-text-size-adjust: 100%;
-        -ms-text-size-adjust: 100%;
-        text-size-adjust: 100%;
-    }
-    
-    .blank-input {
-        -webkit-appearance: none;
-        appearance: none;
-        -webkit-user-select: text;
-        user-select: text;
-    }
-    
-    .container {
-        min-height: 100vh;
-        position: relative;
-    }
-    
-    .main-content {
-        min-height: calc(100vh - 200px);
-    }
-}
 
 /* 매우 작은 화면 (모바일) */
 @media (max-width: 360px) {

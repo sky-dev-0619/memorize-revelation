@@ -53,8 +53,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 스크롤 투 탑 버튼 이벤트 리스너
     setupScrollToTopButton();
     
-    // 모바일 키보드 스크롤 방지 설정
-    setupMobileKeyboardHandlers();
+
 });
 
 function initializeSelectors() {
@@ -673,84 +672,4 @@ function setupScrollToTopButton() {
     });
 }
 
-// 모바일 키보드 스크롤 방지 함수들
-function setupMobileKeyboardHandlers() {
-    let originalScrollTop = 0;
-    let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    let isAndroid = /Android/.test(navigator.userAgent);
-    
-    // 모바일 환경에서만 실행
-    if (!isIOS && !isAndroid) return;
-    
-    // 뷰포트 높이 변화 감지 (키보드 온오프)
-    let initialViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    
-    function handleViewportChange() {
-        if (window.visualViewport) {
-            const currentHeight = window.visualViewport.height;
-            const heightDifference = initialViewportHeight - currentHeight;
-            
-            if (heightDifference > 150) { // 키보드가 올라온 상태
-                document.body.classList.add('keyboard-active');
-            } else { // 키보드가 내려간 상태
-                document.body.classList.remove('keyboard-active');
-            }
-        }
-    }
-    
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', handleViewportChange);
-    }
-    
-    // Input 포커스 처리
-    function handleInputFocus(event) {
-        if (event.target.classList.contains('blank-input')) {
-            originalScrollTop = window.pageYOffset;
-            
-            setTimeout(() => {
-                if (isIOS) {
-                    // iOS에서 스크롤 위치 고정
-                    document.body.style.position = 'fixed';
-                    document.body.style.top = `-${originalScrollTop}px`;
-                    document.body.style.width = '100%';
-                }
-                
-                // 입력 필드가 화면에 보이도록 스크롤 조정
-                const inputRect = event.target.getBoundingClientRect();
-                const keyboardHeight = isIOS ? 300 : 250; // 추정 키보드 높이
-                const availableHeight = window.innerHeight - keyboardHeight;
-                
-                if (inputRect.bottom > availableHeight) {
-                    const scrollAmount = inputRect.bottom - availableHeight + 20;
-                    window.scrollBy(0, scrollAmount);
-                }
-            }, 100);
-        }
-    }
-    
-    function handleInputBlur(event) {
-        if (event.target.classList.contains('blank-input')) {
-            setTimeout(() => {
-                if (isIOS) {
-                    // iOS에서 스크롤 위치 복원
-                    document.body.style.position = '';
-                    document.body.style.top = '';
-                    document.body.style.width = '';
-                    window.scrollTo(0, originalScrollTop);
-                }
-                document.body.classList.remove('keyboard-active');
-            }, 100);
-        }
-    }
-    
-    // 이벤트 위임 사용
-    document.addEventListener('focusin', handleInputFocus);
-    document.addEventListener('focusout', handleInputBlur);
-    
-    // 화면 회전 처리
-    window.addEventListener('orientationchange', function() {
-        setTimeout(() => {
-            initialViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        }, 500);
-    });
-}
+

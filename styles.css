@@ -30,6 +30,9 @@
     --shadow: 0 1px 3px rgba(15, 15, 15, 0.06), 0 0 0 1px rgba(15, 15, 15, 0.03);
     /* 글자 크기 배율 */
     --reading-scale: 1;
+    /* 빈칸 입력 기본 배경 (노션 스타일 웜 옐로우) */
+    --blank-input-bg: #fef9e4;
+    --blank-input-border: #e8d88a;
 }
 
 /* 전역 스타일 */
@@ -256,17 +259,32 @@ body.modal-open {
 }
 
 .difficulty-desc {
+    display: block;
     font-size: 12px;
     font-weight: 400;
     opacity: 0.8;
     margin-top: 2px;
 }
 
+/* 모바일 전용 하단 설명줄 — PC에서는 숨김 */
+.difficulty-desc-mobile {
+    display: none;
+}
+
 /* 맨 위로 가기 버튼 */
-.scroll-to-top {
+/* 플로팅 액션 컨테이너 (위로가기 + 퀵메뉴) */
+.floating-actions {
     position: fixed;
     bottom: calc(30px + env(safe-area-inset-bottom));
     right: max(30px, env(safe-area-inset-right));
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.scroll-to-top {
     width: 50px;
     height: 50px;
     background: var(--mint-strong);
@@ -278,10 +296,43 @@ body.modal-open {
     font-weight: bold;
     box-shadow: var(--shadow);
     transition: background-color 0.2s ease;
-    z-index: 999;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* 퀵메뉴 */
+.quick-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.quick-menu-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+@media (hover: hover) {
+    .quick-menu-btn:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+    }
+}
+
+.quick-menu-btn:active {
+    background: var(--surface-hover);
 }
 
 @media (hover: hover) {
@@ -304,8 +355,15 @@ body.modal-open {
 /* 버튼 스타일 */
 .action-buttons {
     display: flex;
-    gap: 15px;
+    flex-direction: row;
+    gap: 10px;
     flex-wrap: wrap;
+    align-items: center;
+}
+
+/* PC: 그룹 구분 없이 모든 버튼이 한 줄에 */
+.action-group {
+    display: contents;
 }
 
 .btn {
@@ -413,13 +471,6 @@ body.modal-open {
     min-height: 400px;
 }
 
-/* 아이패드 가로 등 넓은 화면에서 본문 읽기 편하도록 제한 */
-@media (min-width: 900px) {
-    .question-content,
-    .blank-test-area .question-content {
-        max-width: 780px;
-    }
-}
 
 .question-area,
 .answer-area,
@@ -534,8 +585,8 @@ body.modal-open {
 /* 입력 필드 스타일 */
 .blank-input {
     --fs: 16px;
-    border: 1px solid var(--border-strong);
-    background: var(--mint-soft);
+    border: 1px solid var(--blank-input-border);
+    background: var(--blank-input-bg);
     padding: 2px 6px;
     margin: 0 2px;
     border-radius: var(--radius-sm);
@@ -606,7 +657,7 @@ body.modal-open {
 .blank-input:focus {
     outline: none;
     border-color: var(--mint);
-    background: var(--surface);
+    background: var(--mint-soft);
 }
 
 .blank-input::placeholder {
@@ -922,17 +973,34 @@ body.modal-open {
         white-space: nowrap;
     }
 
+    /* 모바일 세그먼트 컨트롤 */
     .difficulty-options {
-        gap: 8px;
+        flex-wrap: nowrap;
+        gap: 5px;
     }
 
     .difficulty-option {
-        min-width: 100px;
+        flex: 1;
+        min-width: 0;
     }
 
     .difficulty-option label {
-        padding: 12px 8px;
-        font-size: 15px;
+        padding: 10px 4px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .difficulty-desc {
+        display: none;
+    }
+
+    .difficulty-desc-mobile {
+        display: block;
+        font-size: 12px;
+        color: var(--text-muted);
+        text-align: center;
+        margin-top: 6px;
+        min-height: 16px;
     }
     
     .title-icon {
@@ -940,31 +1008,66 @@ body.modal-open {
         height: 35px;
     }
     
-    .scroll-to-top {
+    .floating-actions {
         bottom: calc(20px + env(safe-area-inset-bottom));
         right: max(20px, env(safe-area-inset-right));
-        width: 48px;
-        height: 48px;
+    }
+
+    .scroll-to-top {
+        width: 46px;
+        height: 46px;
         font-size: 18px;
     }
-    
+
     .scroll-arrow {
         width: 20px;
         height: 20px;
     }
-    
+
+    .quick-menu-btn {
+        width: 40px;
+        height: 40px;
+    }
+
     .range-separator {
         margin: 15px 0;
         font-size: 1.1rem;
     }
-    
+
+    /* 모바일: 그룹별 분리, 생성 2개 / 보조 3개 각각 한 줄 */
     .action-buttons {
         flex-direction: column;
+        gap: 8px;
     }
-    
-    .btn {
+
+    .action-group {
+        display: flex;
         width: 100%;
-        padding: 15px;
+    }
+
+    .action-group-generate {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .action-group-generate .btn {
+        flex: 1;
+        padding: 13px 10px;
+    }
+
+    .action-group-secondary {
+        flex-direction: row;
+        gap: 6px;
+    }
+
+    .action-group-secondary .btn {
+        flex: 1;
+        padding: 11px 6px;
+        font-size: 14px;
+    }
+
+    .btn {
+        padding: 13px 20px;
     }
     
     .verse {
@@ -1080,17 +1183,12 @@ body.modal-open {
     }
 
     .difficulty-options {
-        gap: 6px;
-        flex-direction: column;
-    }
-
-    .difficulty-option {
-        min-width: auto;
+        gap: 4px;
     }
 
     .difficulty-option label {
-        padding: 10px 8px;
-        font-size: 15px;
+        padding: 9px 2px;
+        font-size: 12px;
     }
     
     .title-icon {
@@ -1098,17 +1196,25 @@ body.modal-open {
         height: 30px;
     }
     
-    .scroll-to-top {
+    .floating-actions {
         bottom: 15px;
         right: 15px;
+    }
+
+    .scroll-to-top {
         width: 40px;
         height: 40px;
         font-size: 16px;
     }
-    
+
     .scroll-arrow {
         width: 18px;
         height: 18px;
+    }
+
+    .quick-menu-btn {
+        width: 36px;
+        height: 36px;
     }
     
     .modal {
@@ -1185,13 +1291,12 @@ body.modal-open {
     }
 
     .difficulty-options {
-        gap: 4px;
-        flex-direction: column;
+        gap: 3px;
     }
 
     .difficulty-option label {
-        padding: 8px 6px;
-        font-size: 14px;
+        padding: 8px 2px;
+        font-size: 11px;
     }
     
     .title-icon {
@@ -1199,14 +1304,17 @@ body.modal-open {
         height: 25px;
     }
     
-    .scroll-to-top {
+    .floating-actions {
         bottom: calc(10px + env(safe-area-inset-bottom));
         right: max(10px, env(safe-area-inset-right));
-        width: 44px;
-        height: 44px;
+    }
+
+    .scroll-to-top {
+        width: 42px;
+        height: 42px;
         font-size: 14px;
     }
-    
+
     .scroll-arrow {
         width: 16px;
         height: 16px;

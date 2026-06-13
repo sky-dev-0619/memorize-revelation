@@ -47,34 +47,38 @@
                     <div class="difficulty-options">
                         <div class="difficulty-option">
                             <input type="radio" id="difficulty1" name="difficulty" value="1" checked>
-                            <label for="difficulty1">1단계<br><span class="difficulty-desc">기초 - 빈칸 15%</span></label>
+                            <label for="difficulty1">1단계<span class="difficulty-desc">기초 - 빈칸 15%</span></label>
                         </div>
                         <div class="difficulty-option">
                             <input type="radio" id="difficulty2" name="difficulty" value="2">
-                            <label for="difficulty2">2단계<br><span class="difficulty-desc">초급 - 빈칸 25%</span></label>
+                            <label for="difficulty2">2단계<span class="difficulty-desc">초급 - 빈칸 25%</span></label>
                         </div>
                         <div class="difficulty-option">
                             <input type="radio" id="difficulty3" name="difficulty" value="3">
-                            <label for="difficulty3">3단계<br><span class="difficulty-desc">중급 - 빈칸 40%</span></label>
+                            <label for="difficulty3">3단계<span class="difficulty-desc">중급 - 빈칸 40%</span></label>
                         </div>
                         <div class="difficulty-option">
                             <input type="radio" id="difficulty4" name="difficulty" value="4">
-                            <label for="difficulty4">4단계<br><span class="difficulty-desc">고급 - 빈칸 60%</span></label>
+                            <label for="difficulty4">4단계<span class="difficulty-desc">고급 - 빈칸 60%</span></label>
                         </div>
                         <div class="difficulty-option">
                             <input type="radio" id="difficulty5" name="difficulty" value="5">
-                            <label for="difficulty5">5단계<br><span class="difficulty-desc">최고급 - 빈칸 80%</span></label>
+                            <label for="difficulty5">5단계<span class="difficulty-desc">최고급 - 빈칸 80%</span></label>
                         </div>
                     </div>
+                    <div id="difficultyDescMobile" class="difficulty-desc-mobile"></div>
                 </div>
 
                 <div class="action-buttons">
-                    <button id="generateBtn" class="btn btn-primary">빈칸문제 생성</button>
-                    <button id="blankTestBtn" class="btn btn-primary">백지시험 생성</button>
-                    <button id="showAnswerBtn" class="btn btn-ghost" disabled>본문 확인</button>
-                    <button id="gradeBtn" class="btn btn-primary" disabled>채점하기</button>
-                    <button id="clearBlanksBtn" class="btn btn-ghost" disabled>빈칸 초기화</button>
-                    <button id="retryBtn" class="btn btn-ghost hidden" disabled>다시 문제풀기</button>
+                    <div class="action-group action-group-generate">
+                        <button id="generateBtn" class="btn btn-primary">빈칸문제 생성</button>
+                        <button id="blankTestBtn" class="btn btn-primary">백지시험 생성</button>
+                    </div>
+                    <div class="action-group action-group-secondary hidden">
+                        <button id="showAnswerBtn" class="btn btn-ghost">본문 확인</button>
+                        <button id="gradeBtn" class="btn btn-primary">채점하기</button>
+                        <button id="clearBlanksBtn" class="btn btn-ghost">빈칸 초기화</button>
+                    </div>
                 </div>
 
             </div>
@@ -138,10 +142,23 @@
         </div>
     </div>
 
-    <!-- 맨 위로 가기 버튼 -->
-    <button id="scrollToTopBtn" class="scroll-to-top hidden" title="맨 위로 가기">
-        <img src="resource/icon/arrow_up.png" alt="위로 가기" class="scroll-arrow">
-    </button>
+    <!-- 플로팅 액션 영역 (위로가기 + 퀵메뉴) -->
+    <div class="floating-actions">
+        <button id="scrollToTopBtn" class="scroll-to-top hidden" title="맨 위로 가기">
+            <img src="resource/icon/arrow_up.png" alt="위로 가기" class="scroll-arrow">
+        </button>
+        <div id="quickMenu" class="quick-menu hidden">
+            <button id="quickAnswerBtn" class="quick-menu-btn" title="본문 확인" aria-label="본문 확인">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button id="quickClearBtn" class="quick-menu-btn" title="빈칸 초기화" aria-label="빈칸 초기화">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8a5.5 5.5 0 1 0 1.4-3.65L2 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 2.5V5.5H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button id="quickGradeBtn" class="quick-menu-btn" title="채점하기" aria-label="채점하기">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+        </div>
+    </div>
 
     <script src="data.js"></script>
     <script src="script.js"></script>

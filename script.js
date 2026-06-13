@@ -29,7 +29,10 @@ const blankTestBtn = document.getElementById('blankTestBtn');
 const showAnswerBtn = document.getElementById('showAnswerBtn');
 const gradeBtn = document.getElementById('gradeBtn');
 const clearBlanksBtn = document.getElementById('clearBlanksBtn');
-const retryBtn = document.getElementById('retryBtn');
+const quickMenu = document.getElementById('quickMenu');
+const quickAnswerBtn = document.getElementById('quickAnswerBtn');
+const quickClearBtn = document.getElementById('quickClearBtn');
+const quickGradeBtn = document.getElementById('quickGradeBtn');
 const questionArea = document.getElementById('questionArea');
 const blankTestArea = document.getElementById('blankTestArea');
 const answerArea = document.getElementById('answerArea');
@@ -56,11 +59,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         modal.classList.add('hidden');
     }
     
-    // 버튼 초기 상태 설정
-    showAnswerBtn.disabled = true;
-    gradeBtn.disabled = true;
-    clearBlanksBtn.disabled = true;
-    retryBtn.disabled = true;
+    // 보조 버튼 그룹은 문제 생성 전까지 숨김
+    setSecondaryButtonsVisible(false);
     
     // 요한계시록 데이터 로드
     await loadRevelationData();
@@ -108,12 +108,19 @@ function setupEventListeners() {
     verseStartSelect.addEventListener('change', handleRangeChange);
     chapterEndSelect.addEventListener('change', handleRangeChange);
     verseEndSelect.addEventListener('change', handleRangeChange);
+    document.querySelectorAll('input[name="difficulty"]').forEach(radio => {
+        radio.addEventListener('change', updateDifficultyDescMobile);
+    });
+    updateDifficultyDescMobile();
+
     generateBtn.addEventListener('click', generateQuestion);
     blankTestBtn.addEventListener('click', generateBlankTest);
     showAnswerBtn.addEventListener('click', showAnswer);
     gradeBtn.addEventListener('click', gradeAnswers);
     clearBlanksBtn.addEventListener('click', clearAllBlanks);
-    retryBtn.addEventListener('click', retryQuestion);
+    quickAnswerBtn.addEventListener('click', showAnswer);
+    quickClearBtn.addEventListener('click', clearAllBlanks);
+    quickGradeBtn.addEventListener('click', gradeAnswers);
 
     const fontDecreaseBtn = document.getElementById('fontDecreaseBtn');
     const fontResetBtn = document.getElementById('fontResetBtn');
@@ -261,10 +268,8 @@ function generateQuestion() {
     
     // UI 업데이트
     displayQuestion(currentQuestion);
-    showAnswerBtn.disabled = false;
-    gradeBtn.disabled = false;
-    clearBlanksBtn.disabled = false;
-    
+    setSecondaryButtonsVisible(true);
+
     // 영역 표시
     questionArea.classList.remove('hidden');
     blankTestArea.classList.add('hidden');
@@ -294,6 +299,22 @@ function clearDifficultySelection() {
     difficultyRadios.forEach(radio => {
         radio.checked = false;
     });
+    updateDifficultyDescMobile();
+}
+
+const DIFFICULTY_DESCS = {
+    '1': '기초 - 빈칸 15%',
+    '2': '초급 - 빈칸 25%',
+    '3': '중급 - 빈칸 40%',
+    '4': '고급 - 빈칸 60%',
+    '5': '최고급 - 빈칸 80%'
+};
+
+function updateDifficultyDescMobile() {
+    const el = document.getElementById('difficultyDescMobile');
+    if (!el) return;
+    const checked = document.querySelector('input[name="difficulty"]:checked');
+    el.textContent = checked ? DIFFICULTY_DESCS[checked.value] : '';
 }
 
 function validateRange(startChapter, startVerse, endChapter, endVerse) {
@@ -518,10 +539,8 @@ function generateBlankTest() {
     
     // UI 업데이트
     displayBlankTest(currentBlankTest);
-    showAnswerBtn.disabled = false;
-    gradeBtn.disabled = false;
-    clearBlanksBtn.disabled = false;
-    
+    setSecondaryButtonsVisible(true);
+
     // 영역 표시
     blankTestArea.classList.remove('hidden');
     questionArea.classList.add('hidden');
@@ -582,6 +601,9 @@ function displayBlankTest(blankTest) {
     
     html += '</div>';
     blankTestContent.innerHTML = html;
+
+    // PC: 포커싱된 백지시험 입력 칸 중앙 스크롤
+    setupPcFocusScroll(Array.from(blankTestContent.querySelectorAll('.blank-test-input')));
 }
 
 function showAnswer() {
@@ -706,13 +728,6 @@ function gradeAnswers() {
         return;
     }
     
-    // 채점 후 절별 클릭 기능 활성화
-    enableVerseClickToShowAnswer();
-
-    // 다시 문제풀기 버튼 활성화
-    retryBtn.classList.remove('hidden');
-    retryBtn.disabled = false;
-
     // 첫 번째 오답으로 스크롤
     setTimeout(() => {
         const firstWrong = document.querySelector('.blank-input.incorrect, .blank-test-input.incorrect');
@@ -850,63 +865,14 @@ function resetGradingStyles() {
         scoreDisplay.classList.add('hidden');
         scoreDisplay.classList.remove('perfect', 'incorrect');
     }
-    
+
     const blankTestScoreDisplay = document.getElementById('blankTestScoreDisplay');
     if (blankTestScoreDisplay) {
         blankTestScoreDisplay.classList.add('hidden');
         blankTestScoreDisplay.classList.remove('perfect', 'incorrect');
     }
-    
-    // 다시 문제풀기 버튼 숨기기
-    retryBtn.classList.add('hidden');
-    retryBtn.disabled = true;
 }
 
-function retryQuestion() {
-    if (currentBlankTest) {
-        // 백지시험: 채점 스타일만 제거하고 입력된 텍스트는 유지
-        const textareas = document.querySelectorAll('.blank-test-input');
-        textareas.forEach(textarea => {
-            textarea.classList.remove('correct', 'incorrect');
-        });
-        
-        // 백지시험 점수 표시 숨기기
-        const blankTestScoreDisplay = document.getElementById('blankTestScoreDisplay');
-        if (blankTestScoreDisplay) {
-            blankTestScoreDisplay.classList.add('hidden');
-            blankTestScoreDisplay.classList.remove('perfect', 'incorrect');
-        }
-    } else if (currentQuestion) {
-        // 일반 빈칸: 채점 스타일만 제거하고 입력된 텍스트는 유지
-        const inputs = document.querySelectorAll('.blank-input');
-        inputs.forEach(input => {
-            input.classList.remove('correct', 'incorrect');
-        });
-        
-        // 빈칸문제 점수 표시 숨기기
-        const scoreDisplay = document.getElementById('scoreDisplay');
-        if (scoreDisplay) {
-            scoreDisplay.classList.add('hidden');
-            scoreDisplay.classList.remove('perfect', 'incorrect');
-        }
-    } else {
-        return;
-    }
-    
-    // 절 클릭 기능 제거
-    const verses = document.querySelectorAll('.verse');
-    verses.forEach(verse => {
-        verse.classList.remove('clickable');
-        verse.removeEventListener('click', handleVerseClick);
-    });
-    
-    // 다시 문제풀기 버튼 숨기기
-    retryBtn.classList.add('hidden');
-    retryBtn.disabled = true;
-    
-    // 채점 영역 숨기기
-    gradeArea.classList.add('hidden');
-}
 
 function clearAllBlanks() {
     if (currentBlankTest) {
@@ -947,11 +913,7 @@ function clearAllBlanks() {
         verse.classList.remove('clickable');
         verse.removeEventListener('click', handleVerseClick);
     });
-    
-    // 다시 문제풀기 버튼 숨기기
-    retryBtn.classList.add('hidden');
-    retryBtn.disabled = true;
-    
+
     // 채점 영역 숨기기
     gradeArea.classList.add('hidden');
 }
@@ -1014,26 +976,12 @@ function resetToInitialState() {
     answerArea.classList.add('hidden');
     gradeArea.classList.add('hidden');
     
-    // 버튼 상태 초기화
-    showAnswerBtn.disabled = true;
-    gradeBtn.disabled = true;
-    clearBlanksBtn.disabled = true;
-    retryBtn.disabled = true;
-    retryBtn.classList.add('hidden');
+    // 보조 버튼 그룹 숨기기
+    setSecondaryButtonsVisible(false);
     
     // 점수 표시 숨기기
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    if (scoreDisplay) {
-        scoreDisplay.classList.add('hidden');
-        scoreDisplay.classList.remove('perfect', 'incorrect');
-    }
-    
-    const blankTestScoreDisplay = document.getElementById('blankTestScoreDisplay');
-    if (blankTestScoreDisplay) {
-        blankTestScoreDisplay.classList.add('hidden');
-        blankTestScoreDisplay.classList.remove('perfect', 'incorrect');
-    }
-    
+    resetGradingStyles();
+
     // 모달 닫기
     const modal = document.getElementById('answerModal');
     if (modal) {
@@ -1058,6 +1006,11 @@ function closeAnswerModal() {
 function setupBlankInputBehavior() {
     const inputs = Array.from(document.querySelectorAll('.blank-input'));
     inputs.forEach((input, index) => {
+        // 채점 후 수정 시 오답 표시 초기화
+        input.addEventListener('input', () => {
+            input.classList.remove('correct', 'incorrect');
+        });
+
         // 데스크톱용: 조합 상태를 직접 추적(e.isComposing보다 신뢰 가능).
         let composing = false;
         input.addEventListener('compositionstart', () => { composing = true; });
@@ -1111,6 +1064,9 @@ function setupBlankInputBehavior() {
             }
         });
     });
+
+    // PC: 포커싱된 빈칸 중앙 스크롤
+    setupPcFocusScroll(inputs);
 
     // 포커스당 1회만 auto-scroll: 키보드가 올라오는 순간(높이 감소)에만 반응
     if (window.visualViewport) {
@@ -1248,6 +1204,30 @@ function setupScrollToTopButton() {
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
+        });
+    });
+}
+
+// 보조 버튼 그룹(본문확인/채점하기/빈칸초기화)과 퀵메뉴 노출 여부를 일괄 토글
+function setSecondaryButtonsVisible(visible) {
+    const secondaryGroup = document.querySelector('.action-group-secondary');
+    if (visible) {
+        secondaryGroup.classList.remove('hidden');
+        quickMenu.classList.remove('hidden');
+    } else {
+        secondaryGroup.classList.add('hidden');
+        quickMenu.classList.add('hidden');
+    }
+}
+
+// PC: 포커싱된 입력 칸을 화면 중앙으로 자동 스크롤
+function setupPcFocusScroll(inputs) {
+    if (IS_IOS_LIKE) return;
+    inputs.forEach(input => {
+        input.addEventListener('focus', () => {
+            requestAnimationFrame(() => {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
         });
     });
 }

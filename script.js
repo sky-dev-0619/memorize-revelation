@@ -400,7 +400,7 @@ function mergeConsecutiveBlanks(words, blanks, startMergedId = 0) {
                     wordCount: currentBlankGroup.length
                 });
                 
-                mergedWords.push(`<input type="text" class="blank-input" data-blank-id="${currentMergedId}" style="width: ${inputWidth}px;">`);
+                mergedWords.push(`<input type="text" class="blank-input" data-blank-id="${currentMergedId}" style="width: ${inputWidth}px;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">`);
                 currentMergedId++;
             }
         } else {
@@ -446,6 +446,7 @@ function displayQuestion(question) {
     
     html += '</div>';
     questionContent.innerHTML = html;
+    setupBlankInputBehavior();
 }
 
 // 백지시험 생성 함수
@@ -504,7 +505,7 @@ function createBlankTest(verses) {
         const { chapter, verse, text } = verseData;
         
         // 백지시험: 완전한 입력 영역 제공
-        const processedText = `<textarea class="blank-test-input" data-blank-id="${verseIndex}" placeholder="여기에 ${chapter}:${verse} 구절을 입력하세요..."></textarea>`;
+        const processedText = `<textarea class="blank-test-input" data-blank-id="${verseIndex}" placeholder="여기에 ${chapter}:${verse} 구절을 입력하세요..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>`;
         const blankInfo = { blanks: [{ id: verseIndex, answer: text, wordCount: text.split(' ').length }] };
         
         blankTest.verses.push({
@@ -565,7 +566,7 @@ function showAnswer() {
     
     // 모달에 내용 표시
     document.getElementById('modalAnswerContent').innerHTML = html;
-    document.getElementById('answerModal').classList.remove('hidden');
+    openAnswerModal();
 }
 
 function gradeAnswers() {
@@ -661,10 +662,18 @@ function gradeAnswers() {
     
     // 채점 후 절별 클릭 기능 활성화
     enableVerseClickToShowAnswer();
-    
+
     // 다시 문제풀기 버튼 활성화
     retryBtn.classList.remove('hidden');
     retryBtn.disabled = false;
+
+    // 첫 번째 오답으로 스크롤
+    setTimeout(() => {
+        const firstWrong = document.querySelector('.blank-input.incorrect, .blank-test-input.incorrect');
+        if (firstWrong) {
+            firstWrong.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 200);
 }
 
 function updateScoreDisplay(correctAnswers, totalBlanks) {
@@ -766,7 +775,7 @@ function showVerseAnswer(chapter, verse, originalText) {
     
     // 모달에 내용 표시
     document.getElementById('modalAnswerContent').innerHTML = html;
-    document.getElementById('answerModal').classList.remove('hidden');
+    openAnswerModal();
 }
 
 function resetGradingStyles() {
@@ -989,9 +998,61 @@ function resetToInitialState() {
 
 
 // 모달 관련 함수들
+function openAnswerModal() {
+    document.getElementById('answerModal').classList.remove('hidden');
+    document.body.classList.add('modal-open');
+}
+
 function closeAnswerModal() {
     document.getElementById('answerModal').classList.add('hidden');
+    document.body.classList.remove('modal-open');
 }
+
+// 빈칸 입력 UX: 포커스 시 키보드에 안 가리도록 스크롤, 엔터/다음으로 다음 빈칸 이동
+function setupBlankInputBehavior() {
+    const inputs = Array.from(document.querySelectorAll('.blank-input'));
+    inputs.forEach((input, index) => {
+        input.addEventListener('focus', () => {
+            setTimeout(() => {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const next = inputs[index + 1];
+                if (next) next.focus();
+            }
+        });
+    });
+}
+
+// 아이패드 회전 시 빈칸 너비 재계산
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        if (currentQuestion) {
+            const inputs = document.querySelectorAll('.blank-input');
+            const isMobile = window.innerWidth <= 768;
+            inputs.forEach(input => {
+                const blankId = parseInt(input.dataset.blankId);
+                const allBlanks = currentQuestion.verses.flatMap(v => v.blankInfo.blanks);
+                const blank = allBlanks.find(b => b.id === blankId);
+                if (!blank) return;
+                const answer = blank.answer || '';
+                let width;
+                if (isMobile) {
+                    const maxW = Math.min(window.innerWidth - 80, 250);
+                    width = Math.min(answer.length * 12 + 20, maxW);
+                } else {
+                    width = Math.max(answer.length * 14, 50) + 15;
+                }
+                input.style.width = width + 'px';
+            });
+        }
+    }, 150);
+});
 
 function setupPageReloadHandler() {
     // 페이지 새로고침 시 스크롤 위치를 최상단으로 설정

@@ -3,6 +3,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -11,9 +12,14 @@ body {
     color: #333;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    /* 모바일 키보드 스크롤 방지 */
     position: relative;
     overflow-x: hidden;
+}
+
+body.modal-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
 }
 
 .container {
@@ -200,11 +206,13 @@ body {
     line-height: 1.3;
 }
 
-.difficulty-option label:hover {
-    border-color: #667eea;
-    background: rgba(102, 126, 234, 0.05);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+@media (hover: hover) {
+    .difficulty-option label:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
 }
 
 .difficulty-option input[type="radio"]:checked + label {
@@ -225,8 +233,8 @@ body {
 /* 맨 위로 가기 버튼 */
 .scroll-to-top {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    bottom: calc(30px + env(safe-area-inset-bottom));
+    right: max(30px, env(safe-area-inset-right));
     width: 50px;
     height: 50px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -289,19 +297,9 @@ body {
     color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-}
-
 .btn-secondary {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     color: white;
-}
-
-.btn-secondary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3);
 }
 
 .btn-success {
@@ -309,19 +307,9 @@ body {
     color: white;
 }
 
-.btn-success:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
-}
-
 .btn-warning {
     background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
     color: #2d3436;
-}
-
-.btn-warning:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(253, 203, 110, 0.3);
 }
 
 .btn-info {
@@ -329,9 +317,27 @@ body {
     color: white;
 }
 
-.btn-info:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(116, 185, 255, 0.3);
+@media (hover: hover) {
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    .btn-secondary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3);
+    }
+    .btn-success:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+    }
+    .btn-warning:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(253, 203, 110, 0.3);
+    }
+    .btn-info:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(116, 185, 255, 0.3);
+    }
 }
 
 
@@ -339,6 +345,14 @@ body {
 /* 컨텐츠 영역 */
 .content-area {
     min-height: 400px;
+}
+
+/* 아이패드 가로 등 넓은 화면에서 본문 읽기 편하도록 제한 */
+@media (min-width: 900px) {
+    .question-content,
+    .blank-test-area .question-content {
+        max-width: 780px;
+    }
 }
 
 .question-area,
@@ -557,7 +571,13 @@ body {
     transition: background-color 0.3s ease;
 }
 
-.verse.clickable:hover {
+@media (hover: hover) {
+    .verse.clickable:hover {
+        background-color: rgba(102, 126, 234, 0.1);
+    }
+}
+
+.verse.clickable:active {
     background-color: rgba(102, 126, 234, 0.1);
 }
 
@@ -656,6 +676,7 @@ body {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     max-width: 600px;
     width: 100%;
+    max-height: calc(100dvh - 40px);
     max-height: calc(100vh - 40px);
     overflow: hidden;
     animation: modalSlideIn 0.3s ease-out;
@@ -694,23 +715,32 @@ body {
     font-size: 24px;
     cursor: pointer;
     padding: 0;
-    width: 30px;
-    height: 30px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.3s ease;
+    flex-shrink: 0;
 }
 
-.modal-close:hover {
+@media (hover: hover) {
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+}
+
+.modal-close:active {
     background: rgba(255, 255, 255, 0.2);
 }
 
 .modal-body {
     padding: 25px;
+    max-height: calc(100dvh - 200px);
     max-height: calc(100vh - 200px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .modal-footer {
@@ -837,10 +867,10 @@ body {
     }
     
     .scroll-to-top {
-        bottom: 20px;
-        right: 20px;
-        width: 45px;
-        height: 45px;
+        bottom: calc(20px + env(safe-area-inset-bottom));
+        right: max(20px, env(safe-area-inset-right));
+        width: 48px;
+        height: 48px;
         font-size: 18px;
     }
     
@@ -918,14 +948,14 @@ body {
     
     .blank-textarea {
         min-height: 100px;
-        font-size: 14px;
+        font-size: 16px;
     }
     
     /* 백지시험 모바일 스타일 */
     .blank-test-input {
         min-height: 120px;
         padding: 14px;
-        font-size: 15px;
+        font-size: 16px;
     }
     
     .blank-test-area {
@@ -1017,6 +1047,7 @@ body {
     .modal-content {
         max-width: none;
         width: 100%;
+        max-height: calc(100dvh - 20px);
         max-height: calc(100vh - 20px);
         border-radius: 10px;
     }
@@ -1031,6 +1062,7 @@ body {
     
     .modal-body {
         padding: 15px 20px;
+        max-height: calc(100dvh - 160px);
         max-height: calc(100vh - 160px);
     }
     
@@ -1097,10 +1129,10 @@ body {
     }
     
     .scroll-to-top {
-        bottom: 10px;
-        right: 10px;
-        width: 35px;
-        height: 35px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        right: max(10px, env(safe-area-inset-right));
+        width: 44px;
+        height: 44px;
         font-size: 14px;
     }
     
@@ -1115,6 +1147,7 @@ body {
     
     .modal-content {
         border-radius: 8px;
+        max-height: calc(100dvh - 10px);
         max-height: calc(100vh - 10px);
     }
     
@@ -1128,6 +1161,7 @@ body {
     
     .modal-body {
         padding: 10px 15px;
+        max-height: calc(100dvh - 100px);
         max-height: calc(100vh - 100px);
     }
     
@@ -1143,8 +1177,8 @@ body {
     }
     
     .modal-close {
-        width: 22px;
-        height: 22px;
-        font-size: 16px;
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
     }
 }

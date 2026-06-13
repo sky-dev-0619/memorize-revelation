@@ -41,7 +41,7 @@
 }
 
 body {
-    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-family: 'Pretendard', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
     line-height: 1.6;
     color: var(--text);
     background: var(--bg);

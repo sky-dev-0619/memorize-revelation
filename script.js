@@ -5,6 +5,11 @@ let currentBlankTest = null;
 // 글자 크기 배율 상태
 const READING_SCALES = [0.85, 1.0, 1.15, 1.3, 1.45, 1.6];
 let readingScaleIndex = 1; // 기본값: 1.0
+
+// iPad/iOS 판별 (iPadOS 13+는 Mac으로 위장하므로 터치 포인트로 구분)
+const IS_IOS_LIKE = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
 let userInputs = [];
 let previousRangeValues = {
     chapterStart: 1,
@@ -1049,20 +1054,57 @@ function closeAnswerModal() {
 function setupBlankInputBehavior() {
     const inputs = Array.from(document.querySelectorAll('.blank-input'));
     inputs.forEach((input, index) => {
+        // 데스크톱용: 조합 상태를 직접 추적(e.isComposing보다 신뢰 가능).
+        let composing = false;
+        input.addEventListener('compositionstart', () => { composing = true; });
+        input.addEventListener('compositionend', () => { composing = false; });
+
         input.addEventListener('keydown', (e) => {
             if (e.key !== 'Tab' && e.key !== 'Enter') return;
 
-            // 네이티브 Tab 이동을 막아야 조합 중인 글자가 다음 칸으로 새지 않음
             e.preventDefault();
 
             const dir = (e.key === 'Tab' && e.shiftKey) ? -1 : 1;
             const target = inputs[index + dir];
             if (!target) return;
 
-            // blur로 한글 IME 조합을 "현재 칸"에 강제 확정시킨 뒤 다음 칸으로 이동.
-            // (조합 중 곧바로 focus를 옮기면 조합 글자가 다음 칸으로 끌려 들어감)
-            input.blur();
-            requestAnimationFrame(() => target.focus());
+            // iOS/iPadOS는 입력 수단에 따라 처리를 나눈다.
+            //
+            // [소프트 키보드] '>' 같은 키보드 내장 다음칸 키는 Enter로 들어온다.
+            //   이때 readOnly 가드를 쓰면 iOS가 다음 칸을 '편집 불가'로 보고 키보드를
+            //   내려버린다. 또한 iOS는 '사용자 제스처' 안에서 '동기' focus를 해야 키보드가
+            //   유지되므로, rAF/blur/readOnly 없이 즉시 focus만 한다.
+            //
+            // [물리 키보드] 소프트 키보드가 없는 상태. Tab으로 이동 시 IME 조합 글자가
+            //   다음 칸에 '복제'되어 새는 누출이 발생한다(소스엔 정상 확정됨). 다음 칸을
+            //   잠깐 readOnly로 막아 유입을 차단한다(타이밍 경쟁에 의존하지 않음).
+            if (IS_IOS_LIKE) {
+                if (isSoftKeyboardVisible()) {
+                    target.focus(); // 동기 focus로 키보드 유지
+                } else {
+                    focusWithLeakGuard(target);
+                }
+                return;
+            }
+
+            // 데스크톱: 조합 중이면 compositionend 후 이동, 아니면 바로 이동.
+            // rAF로 감싸 target에 Tab keydown이 재발사돼 한 칸 건너뛰는 현상 방지.
+            const move = () => requestAnimationFrame(() => target.focus());
+            if (composing) {
+                let done = false;
+                const finish = () => {
+                    if (done) return;
+                    done = true;
+                    input.removeEventListener('compositionend', onEnd);
+                    clearTimeout(safety);
+                    move();
+                };
+                const onEnd = () => finish();
+                input.addEventListener('compositionend', onEnd);
+                const safety = setTimeout(finish, 250);
+            } else {
+                move();
+            }
         });
     });
 
@@ -1099,6 +1141,30 @@ function setupBlankInputBehavior() {
             }
         });
     }
+}
+
+// 소프트(화면) 키보드가 떠 있는지 추정: 키보드가 올라오면 visualViewport 높이가
+// 레이아웃 뷰포트보다 크게 줄어든다. 물리 키보드 사용 시엔 화면 키보드가 없어 거의 같다.
+function isSoftKeyboardVisible() {
+    if (!window.visualViewport) return false;
+    return window.visualViewport.height < window.innerHeight - 100;
+}
+
+// iOS 수신 측 누출 가드: 다음 칸을 잠깐 readOnly로 두어 IME 잔여 조합 글자가
+// 새로 포커스된 칸에 유입되는 것을 차단한다. 누출은 소스에 이미 확정된 글자의
+// '중복'이므로 이 차단으로 데이터가 손실되지 않는다. 가드 창은 사람이 Tab 직후
+// 타이핑하기 어려운 짧은 시간으로 잡아 정상 입력을 거의 막지 않는다.
+function focusWithLeakGuard(target, guardMs = 150) {
+    target.readOnly = true;
+    requestAnimationFrame(() => {
+        target.focus();
+        setTimeout(() => {
+            target.readOnly = false;
+            const len = target.value.length;
+            try { target.setSelectionRange(len, len); } catch (_) {}
+            target.focus(); // readOnly 해제 후 입력 가능 상태로 재확정
+        }, guardMs);
+    });
 }
 
 function recomputeBlankWidths() {

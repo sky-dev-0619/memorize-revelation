@@ -1,6 +1,10 @@
 // 전역 변수
 let currentQuestion = null;
 let currentBlankTest = null;
+
+// 글자 크기 배율 상태
+const READING_SCALES = [0.85, 1.0, 1.15, 1.3, 1.45, 1.6];
+let readingScaleIndex = 1; // 기본값: 1.0
 let userInputs = [];
 let previousRangeValues = {
     chapterStart: 1,
@@ -53,7 +57,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 요한계시록 데이터 로드
     await loadRevelationData();
-    
+
+    // 글자 크기 복원
+    const savedScale = parseFloat(localStorage.getItem('reading-scale'));
+    if (savedScale && READING_SCALES.includes(savedScale)) {
+        readingScaleIndex = READING_SCALES.indexOf(savedScale);
+    }
+    applyReadingScale(READING_SCALES[readingScaleIndex]);
+
     // 선택기 초기화
     initializeSelectors();
     
@@ -96,6 +107,32 @@ function setupEventListeners() {
     gradeBtn.addEventListener('click', gradeAnswers);
     clearBlanksBtn.addEventListener('click', clearAllBlanks);
     retryBtn.addEventListener('click', retryQuestion);
+
+    const fontDecreaseBtn = document.getElementById('fontDecreaseBtn');
+    const fontResetBtn = document.getElementById('fontResetBtn');
+    const fontIncreaseBtn = document.getElementById('fontIncreaseBtn');
+    if (fontDecreaseBtn) {
+        fontDecreaseBtn.addEventListener('click', () => {
+            if (readingScaleIndex > 0) {
+                readingScaleIndex--;
+                applyReadingScale(READING_SCALES[readingScaleIndex]);
+            }
+        });
+    }
+    if (fontResetBtn) {
+        fontResetBtn.addEventListener('click', () => {
+            readingScaleIndex = 1;
+            applyReadingScale(READING_SCALES[readingScaleIndex]);
+        });
+    }
+    if (fontIncreaseBtn) {
+        fontIncreaseBtn.addEventListener('click', () => {
+            if (readingScaleIndex < READING_SCALES.length - 1) {
+                readingScaleIndex++;
+                applyReadingScale(READING_SCALES[readingScaleIndex]);
+            }
+        });
+    }
 }
 
 function updateVerseSelectors() {
@@ -373,26 +410,7 @@ function mergeConsecutiveBlanks(words, blanks, startMergedId = 0) {
             // 연속된 빈칸들을 하나의 입력 필드로 합치기
             if (currentBlankGroup.length > 0) {
                 const combinedAnswer = currentBlankGroup.join(' ');
-                const isMobile = window.innerWidth <= 768;
-                
-                let inputWidth;
-                if (isMobile) {
-                    // 모바일에서는 더 타이트한 크기로 설정
-                    const maxMobileWidth = Math.min(window.innerWidth - 80, 250);
-                    inputWidth = Math.min(combinedAnswer.length * 12 + 20, maxMobileWidth);
-                } else {
-                    // PC에서는 더 타이트한 크기로 설정
-                    inputWidth = Math.max(combinedAnswer.length * 14, 50) + 15;
-                }
-                
-                // 백지시험의 경우 더 넓은 입력 필드 제공
-                if (currentBlankGroup.length >= 5) {  // 5개 이상의 연속 단어면 백지시험으로 간주
-                    if (isMobile) {
-                        inputWidth = Math.min(window.innerWidth - 40, 300);
-                    } else {
-                        inputWidth = Math.min(combinedAnswer.length * 16, 500) + 30;
-                    }
-                }
+                const inputWidth = computeBlankWidth(combinedAnswer.length, currentBlankGroup.length);
                 
                 mergedBlanks.push({
                     id: currentMergedId,
@@ -415,6 +433,25 @@ function mergeConsecutiveBlanks(words, blanks, startMergedId = 0) {
         blanks: mergedBlanks,
         nextMergedId: currentMergedId
     };
+}
+
+function computeBlankWidth(answerLength, wordCount) {
+    const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--reading-scale')) || 1;
+    const isMobile = window.innerWidth <= 768;
+    let width;
+    if (wordCount >= 5) {
+        if (isMobile) {
+            width = Math.min(window.innerWidth - 40, 300);
+        } else {
+            width = Math.min(answerLength * 16, 500) + 30;
+        }
+    } else if (isMobile) {
+        const maxW = Math.min(window.innerWidth - 80, 250);
+        width = Math.min(answerLength * 12 + 20, maxW);
+    } else {
+        width = Math.max(answerLength * 14, 50) + 15;
+    }
+    return Math.round(width * scale);
 }
 
 function getRandomPositions(totalLength, count) {
@@ -1064,31 +1101,35 @@ function setupBlankInputBehavior() {
     }
 }
 
+function recomputeBlankWidths() {
+    if (!currentQuestion) return;
+    const inputs = document.querySelectorAll('.blank-input');
+    const allBlanks = currentQuestion.verses.flatMap(v => v.blankInfo.blanks);
+    inputs.forEach(input => {
+        const blankId = parseInt(input.dataset.blankId);
+        const blank = allBlanks.find(b => b.id === blankId);
+        if (!blank) return;
+        input.style.width = computeBlankWidth(blank.answer.length, blank.wordCount) + 'px';
+    });
+}
+
+function applyReadingScale(scale) {
+    document.documentElement.style.setProperty('--reading-scale', scale);
+    localStorage.setItem('reading-scale', scale);
+    recomputeBlankWidths();
+    const fontDecreaseBtn = document.getElementById('fontDecreaseBtn');
+    const fontIncreaseBtn = document.getElementById('fontIncreaseBtn');
+    const fontResetBtn2 = document.getElementById('fontResetBtn');
+    if (fontDecreaseBtn) fontDecreaseBtn.disabled = (readingScaleIndex === 0);
+    if (fontIncreaseBtn) fontIncreaseBtn.disabled = (readingScaleIndex === READING_SCALES.length - 1);
+    if (fontResetBtn2) fontResetBtn2.disabled = (readingScaleIndex === 1);
+}
+
 // 아이패드 회전 시 빈칸 너비 재계산
 let resizeTimer = null;
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-        if (currentQuestion) {
-            const inputs = document.querySelectorAll('.blank-input');
-            const isMobile = window.innerWidth <= 768;
-            inputs.forEach(input => {
-                const blankId = parseInt(input.dataset.blankId);
-                const allBlanks = currentQuestion.verses.flatMap(v => v.blankInfo.blanks);
-                const blank = allBlanks.find(b => b.id === blankId);
-                if (!blank) return;
-                const answer = blank.answer || '';
-                let width;
-                if (isMobile) {
-                    const maxW = Math.min(window.innerWidth - 80, 250);
-                    width = Math.min(answer.length * 12 + 20, maxW);
-                } else {
-                    width = Math.max(answer.length * 14, 50) + 15;
-                }
-                input.style.width = width + 'px';
-            });
-        }
-    }, 150);
+    resizeTimer = setTimeout(recomputeBlankWidths, 150);
 });
 
 function setupPageReloadHandler() {

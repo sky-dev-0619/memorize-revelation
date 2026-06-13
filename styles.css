@@ -28,6 +28,8 @@
     --radius-lg: 10px;
     --shadow-sm: 0 1px 2px rgba(15, 15, 15, 0.04);
     --shadow: 0 1px 3px rgba(15, 15, 15, 0.06), 0 0 0 1px rgba(15, 15, 15, 0.03);
+    /* 글자 크기 배율 */
+    --reading-scale: 1;
 }
 
 /* 전역 스타일 */
@@ -346,6 +348,65 @@ body.modal-open {
 
 
 
+/* 글자 크기 조절 */
+.font-size-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.font-size-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.font-size-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-fontsize {
+    min-width: 44px;
+    height: 44px;
+    padding: 0 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-fontsize:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.btn-fontsize.btn-fontsize-reset {
+    min-width: 40px;
+    padding: 0 8px;
+    color: var(--text-muted);
+}
+
+@media (hover: hover) {
+    .btn-fontsize:not(:disabled):hover {
+        background: var(--surface-hover);
+        border-color: var(--border-strong);
+    }
+    .btn-fontsize.btn-fontsize-reset:not(:disabled):hover {
+        background: var(--surface-hover);
+    }
+}
+
 /* 컨텐츠 영역 */
 .content-area {
     min-height: 400px;
@@ -462,22 +523,24 @@ body.modal-open {
 }
 
 .verse-text {
+    --fs: 16px;
     color: var(--text);
-    font-size: 16px;
+    font-size: calc(var(--fs) * var(--reading-scale));
     word-break: break-word;
     overflow-wrap: break-word;
 }
 
 /* 입력 필드 스타일 */
 .blank-input {
+    --fs: 16px;
     border: 1px solid var(--border-strong);
     background: var(--mint-soft);
     padding: 2px 6px;
     margin: 0 2px;
     border-radius: var(--radius-sm);
-    font-size: 16px;
-    height: 24px;
-    line-height: 20px;
+    font-size: calc(var(--fs) * var(--reading-scale));
+    height: calc(24px * var(--reading-scale));
+    line-height: calc(20px * var(--reading-scale));
     min-width: 40px;
     max-width: 100%;
     text-align: center;
@@ -495,12 +558,13 @@ body.modal-open {
 
 /* 백지시험 전용 입력 필드 스타일 */
 .blank-test-input {
+    --fs: 16px;
     width: 100%;
     min-height: 100px;
     padding: 16px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
-    font-size: 16px;
+    font-size: calc(var(--fs) * var(--reading-scale));
     font-family: inherit;
     line-height: 1.6;
     resize: vertical;
@@ -585,12 +649,13 @@ body.modal-open {
 }
 
 .blank-textarea {
+    --fs: 16px;
     width: 100%;
     min-height: 120px;
     padding: 15px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
-    font-size: 16px;
+    font-size: calc(var(--fs) * var(--reading-scale));
     font-family: inherit;
     line-height: 1.6;
     resize: vertical;
@@ -778,8 +843,9 @@ body.modal-open {
 }
 
 .modal .verse-text {
+    --fs: 16px;
     color: var(--text);
-    font-size: 16px;
+    font-size: calc(var(--fs) * var(--reading-scale));
     line-height: 1.7;
 }
 
@@ -905,17 +971,16 @@ body.modal-open {
     }
     
     .verse-text {
-        font-size: 17px;
+        --fs: 17px;
     }
 
     .blank-input {
         min-width: 30px;
         max-width: calc(100vw - 40px);
-        font-size: 16px;
         padding: 2px 2px;
         margin: 0 1px;
-        height: 22px;
-        line-height: 18px;
+        height: calc(22px * var(--reading-scale));
+        line-height: calc(18px * var(--reading-scale));
         word-break: break-all;
         vertical-align: baseline;
         position: relative;
@@ -950,19 +1015,17 @@ body.modal-open {
     }
     
     .verse-text {
-        font-size: 17px;
+        --fs: 17px;
     }
-    
+
     .blank-textarea {
         min-height: 100px;
-        font-size: 16px;
     }
-    
+
     /* 백지시험 모바일 스타일 */
     .blank-test-input {
         min-height: 120px;
         padding: 14px;
-        font-size: 16px;
     }
     
     .blank-test-area {
@@ -1079,7 +1142,7 @@ body.modal-open {
     }
     
     .modal .verse-text {
-        font-size: 16px;
+        --fs: 16px;
         line-height: 1.6;
     }
 }
@@ -1179,7 +1242,7 @@ body.modal-open {
     }
     
     .modal .verse-text {
-        font-size: 15px;
+        --fs: 15px;
         line-height: 1.5;
     }
     
@@ -1250,7 +1313,7 @@ body.modal-open {
 
     /* 본문/구절 */
     .verse-text {
-        font-size: 19px;
+        --fs: 19px;
     }
 
     .verse-number,
@@ -1259,14 +1322,14 @@ body.modal-open {
     }
 
     .blank-input {
-        font-size: 18px;
-        height: 28px;
-        line-height: 24px;
+        --fs: 18px;
+        height: calc(28px * var(--reading-scale));
+        line-height: calc(24px * var(--reading-scale));
     }
 
     .blank-test-input,
     .blank-textarea {
-        font-size: 18px;
+        --fs: 18px;
     }
 
     /* 모달 */
@@ -1275,6 +1338,6 @@ body.modal-open {
     }
 
     .modal .verse-text {
-        font-size: 18px;
+        --fs: 18px;
     }
 }

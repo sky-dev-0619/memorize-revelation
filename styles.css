@@ -352,31 +352,32 @@ body.modal-open {
 .font-size-control {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 6px;
 }
 
 .font-size-label {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--text-muted);
     white-space: nowrap;
 }
 
 .font-size-buttons {
     display: flex;
-    gap: 6px;
+    gap: 4px;
 }
 
 .btn-fontsize {
-    min-width: 44px;
-    height: 44px;
-    padding: 0 10px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 7px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
     background: var(--surface);
     color: var(--text);
-    font-size: 15px;
+    font-size: 12px;
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
@@ -392,8 +393,8 @@ body.modal-open {
 }
 
 .btn-fontsize.btn-fontsize-reset {
-    min-width: 40px;
-    padding: 0 8px;
+    min-width: 30px;
+    padding: 0 6px;
     color: var(--text-muted);
 }
 

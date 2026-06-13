@@ -34,6 +34,7 @@ const questionArea = document.getElementById('questionArea');
 const blankTestArea = document.getElementById('blankTestArea');
 const answerArea = document.getElementById('answerArea');
 const gradeArea = document.getElementById('gradeArea');
+const fontSizeControl = document.getElementById('fontSizeControl');
 const scrollToTopBtn = document.getElementById('scrollToTopBtn');
 const questionContent = document.getElementById('questionContent');
 const blankTestContent = document.getElementById('blankTestContent');
@@ -47,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     blankTestArea.classList.add('hidden');
     answerArea.classList.add('hidden');
     gradeArea.classList.add('hidden');
+    fontSizeControl.classList.add('hidden');
     
     // 모달 확실히 숨기기
     const modal = document.getElementById('answerModal');
@@ -268,6 +270,7 @@ function generateQuestion() {
     blankTestArea.classList.add('hidden');
     answerArea.classList.add('hidden');
     gradeArea.classList.add('hidden');
+    fontSizeControl.classList.remove('hidden');
     
     // 이전 채점 결과 초기화
     resetGradingStyles();
@@ -524,6 +527,7 @@ function generateBlankTest() {
     questionArea.classList.add('hidden');
     answerArea.classList.add('hidden');
     gradeArea.classList.add('hidden');
+    fontSizeControl.classList.remove('hidden');
     
     // 이전 채점 결과 초기화
     resetGradingStyles();

@@ -1008,16 +1008,24 @@ function closeAnswerModal() {
     document.body.classList.remove('modal-open');
 }
 
-// 빈칸 입력 UX: 엔터/다음으로 다음 빈칸 이동, 키보드에 가릴 때만 스크롤
+// 빈칸 입력 UX: Tab/엔터로 다음 빈칸 이동, 키보드에 가릴 때만 스크롤
 function setupBlankInputBehavior() {
     const inputs = Array.from(document.querySelectorAll('.blank-input'));
     inputs.forEach((input, index) => {
         input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const next = inputs[index + 1];
-                if (next) next.focus();
-            }
+            if (e.key !== 'Tab' && e.key !== 'Enter') return;
+
+            // 네이티브 Tab 이동을 막아야 조합 중인 글자가 다음 칸으로 새지 않음
+            e.preventDefault();
+
+            const dir = (e.key === 'Tab' && e.shiftKey) ? -1 : 1;
+            const target = inputs[index + dir];
+            if (!target) return;
+
+            // blur로 한글 IME 조합을 "현재 칸"에 강제 확정시킨 뒤 다음 칸으로 이동.
+            // (조합 중 곧바로 focus를 옮기면 조합 글자가 다음 칸으로 끌려 들어감)
+            input.blur();
+            requestAnimationFrame(() => target.focus());
         });
     });
 

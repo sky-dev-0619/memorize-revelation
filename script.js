@@ -223,6 +223,7 @@ function generateQuestion() {
     
     // 영역 표시
     questionArea.classList.remove('hidden');
+    blankTestArea.classList.add('hidden');
     answerArea.classList.add('hidden');
     gradeArea.classList.add('hidden');
     

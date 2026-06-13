@@ -39,3 +39,7 @@ pids
 
 # dotenv environment variables file
 .env
+
+# Local dev tooling (Claude Code)
+CLAUDE.md
+docs/

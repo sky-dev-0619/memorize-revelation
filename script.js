@@ -1008,15 +1008,10 @@ function closeAnswerModal() {
     document.body.classList.remove('modal-open');
 }
 
-// 빈칸 입력 UX: 포커스 시 키보드에 안 가리도록 스크롤, 엔터/다음으로 다음 빈칸 이동
+// 빈칸 입력 UX: 엔터/다음으로 다음 빈칸 이동, 키보드에 가릴 때만 스크롤
 function setupBlankInputBehavior() {
     const inputs = Array.from(document.querySelectorAll('.blank-input'));
     inputs.forEach((input, index) => {
-        input.addEventListener('focus', () => {
-            setTimeout(() => {
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
-        });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1025,6 +1020,40 @@ function setupBlankInputBehavior() {
             }
         });
     });
+
+    // 포커스당 1회만 auto-scroll: 키보드가 올라오는 순간(높이 감소)에만 반응
+    if (window.visualViewport) {
+        let prevVVHeight = window.visualViewport.height;
+        let didScrollForCurrentFocus = false;
+
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                didScrollForCurrentFocus = false;
+                prevVVHeight = window.visualViewport.height;
+            });
+            input.addEventListener('blur', () => {
+                didScrollForCurrentFocus = false;
+            });
+        });
+
+        window.visualViewport.addEventListener('resize', () => {
+            const vv = window.visualViewport;
+            const heightDecreased = vv.height < prevVVHeight - 50; // 키보드 등장
+            prevVVHeight = vv.height;
+
+            if (!heightDecreased || didScrollForCurrentFocus) return;
+
+            const active = document.activeElement;
+            if (!active || !active.classList.contains('blank-input')) return;
+
+            const rect = active.getBoundingClientRect();
+            const visibleBottom = vv.offsetTop + vv.height;
+            if (rect.bottom > visibleBottom - 16) {
+                didScrollForCurrentFocus = true;
+                active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
 }
 
 // 아이패드 회전 시 빈칸 너비 재계산

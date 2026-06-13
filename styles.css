@@ -138,7 +138,7 @@ body.modal-open {
     padding: 8px 12px;
     border: 2px solid #e2e8f0;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 16px;
     background: white;
     transition: border-color 0.3s ease;
     width: 100%;
@@ -202,7 +202,7 @@ body.modal-open {
     background: white;
     font-weight: 600;
     color: #4a5568;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.3;
 }
 
@@ -224,7 +224,7 @@ body.modal-open {
 }
 
 .difficulty-desc {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 400;
     opacity: 0.8;
     margin-top: 2px;
@@ -832,33 +832,33 @@ body.modal-open {
         min-width: 70px;
         max-width: 80px;
         margin: 0;
-        font-size: 14px;
+        font-size: 16px;
     }
-    
+
     .range-row select[id*="verse"] {
         min-width: 60px;
         max-width: 70px;
         margin: 0;
-        font-size: 14px;
+        font-size: 16px;
     }
-    
+
     .verse-label {
-        font-size: 14px;
+        font-size: 16px;
         margin: 0 2px;
         white-space: nowrap;
     }
-    
+
     .difficulty-options {
         gap: 8px;
     }
-    
+
     .difficulty-option {
         min-width: 100px;
     }
-    
+
     .difficulty-option label {
         padding: 12px 8px;
-        font-size: 13px;
+        font-size: 15px;
     }
     
     .title-icon {
@@ -898,9 +898,9 @@ body.modal-open {
     }
     
     .verse-text {
-        font-size: 16px;
+        font-size: 17px;
     }
-    
+
     .blank-input {
         min-width: 30px;
         max-width: calc(100vw - 40px);
@@ -943,7 +943,7 @@ body.modal-open {
     }
     
     .verse-text {
-        font-size: 15px;
+        font-size: 17px;
     }
     
     .blank-textarea {
@@ -987,39 +987,39 @@ body.modal-open {
     }
     
     .range-row > label:first-child {
-        font-size: 15px;
+        font-size: 16px;
         min-width: 45px;
     }
-    
+
     .range-row select[id*="chapter"] {
         min-width: 65px;
         max-width: 75px;
-        font-size: 13px;
+        font-size: 16px;
     }
-    
+
     .range-row select[id*="verse"] {
         min-width: 55px;
         max-width: 65px;
-        font-size: 13px;
+        font-size: 16px;
     }
-    
+
     .verse-label {
-        font-size: 13px;
+        font-size: 15px;
         margin: 0 1px;
     }
-    
+
     .difficulty-options {
         gap: 6px;
         flex-direction: column;
     }
-    
+
     .difficulty-option {
         min-width: auto;
     }
-    
+
     .difficulty-option label {
         padding: 10px 8px;
-        font-size: 12px;
+        font-size: 15px;
     }
     
     .title-icon {
@@ -1072,7 +1072,7 @@ body.modal-open {
     }
     
     .modal .verse-text {
-        font-size: 14px;
+        font-size: 16px;
         line-height: 1.6;
     }
 }
@@ -1092,35 +1092,35 @@ body.modal-open {
     }
     
     .range-row > label:first-child {
-        font-size: 14px;
+        font-size: 15px;
         min-width: 40px;
     }
-    
+
     .range-row select[id*="chapter"] {
         min-width: 60px;
         max-width: 70px;
-        font-size: 12px;
+        font-size: 15px;
     }
-    
+
     .range-row select[id*="verse"] {
         min-width: 50px;
         max-width: 60px;
-        font-size: 12px;
+        font-size: 15px;
     }
-    
+
     .verse-label {
-        font-size: 12px;
+        font-size: 14px;
         margin: 0;
     }
-    
+
     .difficulty-options {
         gap: 4px;
         flex-direction: column;
     }
-    
+
     .difficulty-option label {
         padding: 8px 6px;
-        font-size: 11px;
+        font-size: 14px;
     }
     
     .title-icon {
@@ -1172,8 +1172,8 @@ body.modal-open {
     }
     
     .modal .verse-text {
-        font-size: 12px;
-        line-height: 1.4;
+        font-size: 15px;
+        line-height: 1.5;
     }
     
     .modal-close {

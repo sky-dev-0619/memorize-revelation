@@ -776,6 +776,9 @@ function gradeAnswers() {
         return;
     }
     
+    // 채점 후 절 클릭 시 원문 보기 활성화
+    enableVerseClickToShowAnswer();
+
     // 첫 번째 오답으로 스크롤
     setTimeout(() => {
         const firstWrong = document.querySelector('.blank-input.incorrect, .blank-test-input.incorrect');
@@ -850,6 +853,9 @@ function enableVerseClickToShowAnswer() {
 }
 
 function handleVerseClick(event) {
+    // input 클릭은 편집 용도이므로 모달 열지 않음
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
+
     const verse = event.currentTarget;
     const verseNumber = verse.querySelector('.verse-number');
     
@@ -1119,8 +1125,13 @@ function setupBlankInputBehavior() {
             //   다음 칸에 '복제'되어 새는 누출이 발생한다(소스엔 정상 확정됨). 다음 칸을
             //   잠깐 readOnly로 막아 유입을 차단한다(타이밍 경쟁에 의존하지 않음).
             if (IS_IOS_LIKE) {
-                if (isSoftKeyboardVisible()) {
-                    target.focus(); // 동기 focus로 키보드 유지
+                // Enter(소프트키보드 다음칸)는 항상 동기 focus — readOnly를 쓰면 iOS가
+                // 다음 칸을 편집 불가로 보고 키보드를 내린다. 특히 페이지 하단 근처에서
+                // isSoftKeyboardVisible()이 순간적으로 false를 반환해도 Enter는 소프트키보드
+                // 이벤트이므로 무조건 동기 focus로 처리한다.
+                // Tab(외장 키보드)은 기존 누출 가드 유지.
+                if (e.key === 'Enter' || isSoftKeyboardVisible()) {
+                    target.focus();
                 } else {
                     focusWithLeakGuard(target);
                 }

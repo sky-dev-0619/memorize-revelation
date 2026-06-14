@@ -262,20 +262,21 @@ function generateQuestion() {
     
     // 범위 내 구절들 수집
     const verses = collectVerses(startChapter, startVerse, endChapter, endVerse);
-    
-    // 빈칸 문제 생성
-    currentQuestion = createBlankQuestion(verses, difficulty);
-    
-    // UI 업데이트
-    displayQuestion(currentQuestion);
-    setSecondaryButtonsVisible(true);
 
-    // 영역 표시
+    // 빈칸 칸 폭/분할 계산이 questionContent의 실제 너비를 측정할 수 있도록
+    // 문제 생성 전에 영역을 먼저 표시한다(숨김 상태면 clientWidth가 0이 됨).
     questionArea.classList.remove('hidden');
     blankTestArea.classList.add('hidden');
     answerArea.classList.add('hidden');
     gradeArea.classList.add('hidden');
     fontSizeControl.classList.remove('hidden');
+
+    // 빈칸 문제 생성
+    currentQuestion = createBlankQuestion(verses, difficulty);
+
+    // UI 업데이트
+    displayQuestion(currentQuestion);
+    setSecondaryButtonsVisible(true);
     
     // 이전 채점 결과 초기화
     resetGradingStyles();
@@ -436,19 +437,35 @@ function mergeConsecutiveBlanks(words, blanks, startMergedId = 0) {
                 i++;
             }
             
-            // 연속된 빈칸들을 하나의 입력 필드로 합치기
+            // 연속된 빈칸들을 입력 필드로 만든다.
+            // 한 줄을 넘칠 만큼 긴 연속 빈칸은 단어 경계 기준으로 여러 칸으로 나눠
+            // 화면 밖으로 넘치지 않게 한다(칸 사이에서 자연스럽게 줄바꿈).
             if (currentBlankGroup.length > 0) {
-                const combinedAnswer = currentBlankGroup.join(' ');
-                const inputWidth = computeBlankWidth(combinedAnswer.length, currentBlankGroup.length);
-                
-                mergedBlanks.push({
-                    id: currentMergedId,
-                    answer: combinedAnswer,
-                    wordCount: currentBlankGroup.length
+                const boxes = splitGroupIntoBoxes(currentBlankGroup);
+                const isSplit = boxes.length > 1;
+                const groupName = `g${currentMergedId}`; // 분할 그룹 식별자(자동 이동용)
+
+                boxes.forEach(boxWords => {
+                    const combinedAnswer = boxWords.join(' ');
+                    const inputWidth = computeBlankWidth(combinedAnswer.length, boxWords.length);
+
+                    mergedBlanks.push({
+                        id: currentMergedId,
+                        answer: combinedAnswer,
+                        wordCount: boxWords.length
+                    });
+
+                    // 분할된 경우에만 자동 이동 정보를 부여한다.
+                    // data-fill-len 은 공백을 제외한 정답 글자 수(띄어쓰기는 세지 않음).
+                    let groupAttr = '';
+                    if (isSplit) {
+                        const fillLen = combinedAnswer.replace(/\s/g, '').length;
+                        groupAttr = ` data-blank-group="${groupName}" data-fill-len="${fillLen}"`;
+                    }
+
+                    mergedWords.push(`<input type="text" class="blank-input" data-blank-id="${currentMergedId}" style="width: ${inputWidth}px;"${groupAttr} autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">`);
+                    currentMergedId++;
                 });
-                
-                mergedWords.push(`<input type="text" class="blank-input" data-blank-id="${currentMergedId}" style="width: ${inputWidth}px;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">`);
-                currentMergedId++;
             }
         } else {
             // 일반 단어
@@ -464,23 +481,52 @@ function mergeConsecutiveBlanks(words, blanks, startMergedId = 0) {
     };
 }
 
-function computeBlankWidth(answerLength, wordCount) {
+// 절(verse) 한 줄에 빈칸이 차지할 수 있는 실제 최대 너비(px).
+// questionContent의 렌더된 너비에서 verse 패딩(15*2)+왼쪽 보더(3)를 뺀 값.
+// 이 값을 칸 폭 상한이자 분할 기준으로 써야 카드 밖으로 넘치지 않는다.
+function getVerseContentWidth() {
+    const qc = document.getElementById('questionContent');
+    let w = qc ? qc.clientWidth : 0;
+    // 영역이 아직 숨김이라 측정이 0이면 window 기반으로 보수적 추정.
+    if (!w) w = Math.min(window.innerWidth, 1200) - 40;
+    return Math.max(w - 33, 60);
+}
+
+// 글자 수에 비례한 '상한 적용 전' 칸 너비(px). 분할 판단과 폭 계산의 공통 기준.
+function rawBlankWidth(answerLength) {
     const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--reading-scale')) || 1;
     const isMobile = window.innerWidth <= 768;
-    let width;
-    if (wordCount >= 5) {
-        if (isMobile) {
-            width = Math.min(window.innerWidth - 40, 300);
+    const perChar = isMobile ? 13 : 15;
+    return (answerLength * perChar + 20) * scale;
+}
+
+function computeBlankWidth(answerLength, wordCount) {
+    // 절 내용 너비를 절대 넘지 않게 상한을 둔다(보더/마진 여유 8px).
+    const cap = getVerseContentWidth() - 8;
+    return Math.round(Math.min(rawBlankWidth(answerLength), cap));
+}
+
+// 연속 빈칸 단어 묶음을, 한 줄에 들어가는 크기로 단어 경계에서 나눈다.
+// 단어 중간은 절대 자르지 않는다(한 단어가 한 줄보다 길면 그 단어만 단독 칸).
+function splitGroupIntoBoxes(groupWords) {
+    // 빌드 시점엔 세로 스크롤바가 아직 없어 폭이 더 크게 측정될 수 있으므로,
+    // 스크롤바 여유(~18px)를 더 빼 보수적으로 나눈다(렌더 후 recompute가 최종 보정).
+    const budget = getVerseContentWidth() - 26;
+    const boxes = [];
+    let current = [];
+    groupWords.forEach(word => {
+        const trial = current.concat([word]);
+        // 상한 적용 전 너비로 비교해야, 칸이 budget을 넘기 직전에 새 칸으로 나뉜다.
+        const width = rawBlankWidth(trial.join(' ').length);
+        if (current.length > 0 && width > budget) {
+            boxes.push(current);
+            current = [word];
         } else {
-            width = Math.min(answerLength * 16, 500) + 30;
+            current = trial;
         }
-    } else if (isMobile) {
-        const maxW = Math.min(window.innerWidth - 80, 250);
-        width = Math.min(answerLength * 12 + 20, maxW);
-    } else {
-        width = Math.max(answerLength * 14, 50) + 15;
-    }
-    return Math.round(width * scale);
+    });
+    if (current.length > 0) boxes.push(current);
+    return boxes;
 }
 
 function getRandomPositions(totalLength, count) {
@@ -512,6 +558,8 @@ function displayQuestion(question) {
     
     html += '</div>';
     questionContent.innerHTML = html;
+    // 렌더 후(세로 스크롤바 포함) 실제 폭으로 칸 너비를 다시 클램프해 카드 밖 넘침을 막는다.
+    recomputeBlankWidths();
     setupBlankInputBehavior();
 }
 
@@ -982,17 +1030,24 @@ function resetToInitialState() {
     // 점수 표시 숨기기
     resetGradingStyles();
 
-    // 모달 닫기
+    // 모달 닫기 (열려 있던 경우 body 고정 상태도 함께 해제)
     const modal = document.getElementById('answerModal');
     if (modal) {
         modal.classList.add('hidden');
     }
+    document.body.classList.remove('modal-open');
+    document.body.style.top = '';
 }
 
 
 
 // 모달 관련 함수들
+// body.modal-open 은 position:fixed 라서, 열 때 현재 스크롤 위치를 top 으로 고정해두고
+// 닫을 때 그 위치로 되돌려야 페이지가 최상단으로 튀지 않는다.
+let modalSavedScrollY = 0;
 function openAnswerModal() {
+    modalSavedScrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.top = `-${modalSavedScrollY}px`;
     document.getElementById('answerModal').classList.remove('hidden');
     document.body.classList.add('modal-open');
 }
@@ -1000,6 +1055,8 @@ function openAnswerModal() {
 function closeAnswerModal() {
     document.getElementById('answerModal').classList.add('hidden');
     document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    window.scrollTo(0, modalSavedScrollY);
 }
 
 // 빈칸 입력 UX: Tab/엔터로 다음 빈칸 이동, 키보드에 가릴 때만 스크롤
@@ -1011,10 +1068,36 @@ function setupBlankInputBehavior() {
             input.classList.remove('correct', 'incorrect');
         });
 
-        // 데스크톱용: 조합 상태를 직접 추적(e.isComposing보다 신뢰 가능).
+        // 조합 상태 추적(아래 keydown Tab/Enter 처리에서도 사용).
         let composing = false;
         input.addEventListener('compositionstart', () => { composing = true; });
         input.addEventListener('compositionend', () => { composing = false; });
+
+        // 분할된 연속 빈칸: 현재 칸의 정답 글자 수(공백 제외)를 채우면 같은 그룹의
+        // 다음 칸으로 자동 이동한다. 띄어쓰기는 세지 않는다.
+        const maybeAdvance = () => {
+            const group = input.dataset.blankGroup;
+            if (!group) return;
+            const fillLen = parseInt(input.dataset.fillLen, 10);
+            if (!fillLen) return;
+            const typedLen = input.value.replace(/\s/g, '').length;
+            if (typedLen < fillLen) return;
+            const next = inputs[index + 1];
+            if (next && next.dataset.blankGroup === group) {
+                moveFocusTo(next);
+            }
+        };
+
+        // 자동 이동은 '공백 입력(= 단어 경계)'에서만 한다.
+        // 받침 때문에 글자 수나 compositionend로 이동하면 음절이 쪼개진다: 예) "는"(ㄴㅡㄴ)은
+        // IME가 받침 없는 "느"를 먼저 음절로 확정해버려 "이느" 시점에 이동→받침 ㄴ이 다음 칸으로 샘.
+        // 반면 공백을 치는 순간엔 직전 음절이 받침까지 완전히 확정되고(공백은 조합이 아님),
+        // 분할 칸 경계는 항상 원문 띄어쓰기와 일치하므로 받침이 절대 잘리지 않는다.
+        input.addEventListener('input', (e) => {
+            if (composing || e.isComposing) return;   // 조합 중이면 무시(공백은 조합이 아님)
+            if (!/\s$/.test(input.value)) return;      // 방금 입력으로 끝이 공백이 된 경우만
+            maybeAdvance();
+        });
 
         input.addEventListener('keydown', (e) => {
             if (e.key !== 'Tab' && e.key !== 'Enter') return;
@@ -1112,19 +1195,45 @@ function isSoftKeyboardVisible() {
 
 // iOS 수신 측 누출 가드: 다음 칸을 잠깐 readOnly로 두어 IME 잔여 조합 글자가
 // 새로 포커스된 칸에 유입되는 것을 차단한다. 누출은 소스에 이미 확정된 글자의
-// '중복'이므로 이 차단으로 데이터가 손실되지 않는다. 가드 창은 사람이 Tab 직후
-// 타이핑하기 어려운 짧은 시간으로 잡아 정상 입력을 거의 막지 않는다.
-function focusWithLeakGuard(target, guardMs = 150) {
+// '중복'이므로 이 차단으로 데이터가 손실되지 않는다.
+//
+// 핵심: 누출 조합은 focus 직후(수 ms 내) '키 입력 없이' 들어오므로 readOnly로 막힌다.
+// 반면 사용자의 실제 타이핑은 그보다 늦게 keydown으로 오니, 그 즉시 readOnly를 풀어
+// '첫 글자(자음)가 씹히는' 현상을 없앤다. focus 직후 아주 이른 keydown만 누출로 보고 무시.
+function focusWithLeakGuard(target, guardMs = 250) {
     target.readOnly = true;
-    requestAnimationFrame(() => {
-        target.focus();
-        setTimeout(() => {
-            target.readOnly = false;
-            const len = target.value.length;
-            try { target.setSelectionRange(len, len); } catch (_) {}
-            target.focus(); // readOnly 해제 후 입력 가능 상태로 재확정
-        }, guardMs);
-    });
+    const startTime = performance.now();
+    let released = false;
+    const release = () => {
+        if (released) return;
+        released = true;
+        clearTimeout(safety);
+        target.removeEventListener('keydown', onKeydown);
+        target.readOnly = false;
+        const len = target.value.length;
+        try { target.setSelectionRange(len, len); } catch (_) {}
+        target.focus(); // readOnly 해제 후 입력 가능 상태로 재확정
+    };
+    // focus 직후 ~50ms 안의 keydown은 잔여 조합 플러시로 보고 무시(readOnly 유지),
+    // 그 이후의 keydown(사용자 실제 입력)은 즉시 가드를 풀어 그 글자가 들어가게 한다.
+    const onKeydown = () => { if (performance.now() - startTime > 50) release(); };
+    target.addEventListener('keydown', onKeydown);
+    const safety = setTimeout(release, guardMs); // keydown이 없어도 일정 시간 뒤 자동 해제
+    requestAnimationFrame(() => target.focus());
+}
+
+// 자동 이동용 포커스 이동. iOS 소프트 키보드는 사용자 제스처 안에서 동기 focus 해야
+// 키보드가 유지되므로 분기한다(Tab 이동 로직과 동일한 정책).
+function moveFocusTo(target) {
+    if (IS_IOS_LIKE) {
+        if (isSoftKeyboardVisible()) {
+            target.focus();
+        } else {
+            focusWithLeakGuard(target);
+        }
+    } else {
+        requestAnimationFrame(() => target.focus());
+    }
 }
 
 function recomputeBlankWidths() {

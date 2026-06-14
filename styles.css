@@ -110,14 +110,14 @@ body.modal-open {
 
 /* 저작권 안내 문구 */
 .copyright-notice {
-    background: var(--mint-soft);
+    background: var(--blank-input-bg);
     color: var(--text-muted);
     font-size: 12px;
     text-align: center;
     padding: 8px 12px;
     border-radius: var(--radius-sm);
     margin-bottom: 20px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--blank-input-border);
     font-style: italic;
 }
 
@@ -1080,7 +1080,9 @@ body.modal-open {
 
     .blank-input {
         min-width: 30px;
-        max-width: calc(100vw - 40px);
+        /* 뷰포트(100vw)가 아니라 담는 상자(절 내용) 기준으로 제한해야
+           좁은 화면에서 카드 밖으로 넘치지 않는다. */
+        max-width: 100%;
         padding: 2px 2px;
         margin: 0 1px;
         height: calc(22px * var(--reading-scale));

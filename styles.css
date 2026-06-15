@@ -236,12 +236,12 @@ body.modal-open {
 .difficulty-options {
     display: flex;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .difficulty-option {
     flex: 1;
-    min-width: 120px;
+    min-width: 0;
 }
 
 .difficulty-option input[type="radio"] {

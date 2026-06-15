@@ -253,6 +253,15 @@ function generateQuestion() {
     const endChapter = parseInt(chapterEndSelect.value);
     const endVerse = parseInt(verseEndSelect.value);
     const difficulty = getSelectedDifficulty();
+
+    // 선택된 난이도가 없으면(백지시험 후 해제 상태 등) 1단계를 기본으로 표시한다.
+    if (!document.querySelector('input[name="difficulty"]:checked')) {
+        const radio1 = document.getElementById('difficulty1');
+        if (radio1) {
+            radio1.checked = true;
+            updateDifficultyDescMobile();
+        }
+    }
     
     // 범위 검증
     if (!validateRange(startChapter, startVerse, endChapter, endVerse)) {
@@ -1081,7 +1090,9 @@ function setupBlankInputBehavior() {
 
         // 분할된 연속 빈칸: 현재 칸의 정답 글자 수(공백 제외)를 채우면 같은 그룹의
         // 다음 칸으로 자동 이동한다. 띄어쓰기는 세지 않는다.
-        const maybeAdvance = () => {
+        // softKeyboardActive: 공백 입력으로 트리거된 경우 true — 소프트 키보드가 반드시
+        // 활성 상태이므로 isSoftKeyboardVisible()의 순간적 오판을 우회하기 위해 전달한다.
+        const maybeAdvance = (softKeyboardActive = false) => {
             const group = input.dataset.blankGroup;
             if (!group) return;
             const fillLen = parseInt(input.dataset.fillLen, 10);
@@ -1090,7 +1101,7 @@ function setupBlankInputBehavior() {
             if (typedLen < fillLen) return;
             const next = inputs[index + 1];
             if (next && next.dataset.blankGroup === group) {
-                moveFocusTo(next);
+                moveFocusTo(next, softKeyboardActive);
             }
         };
 
@@ -1102,7 +1113,10 @@ function setupBlankInputBehavior() {
         input.addEventListener('input', (e) => {
             if (composing || e.isComposing) return;   // 조합 중이면 무시(공백은 조합이 아님)
             if (!/\s$/.test(input.value)) return;      // 방금 입력으로 끝이 공백이 된 경우만
-            maybeAdvance();
+            // 공백 입력 = 소프트 키보드로 타이핑 중이 확실하므로 softKeyboardActive=true 전달.
+            // 페이지 하단 근처에서 isSoftKeyboardVisible()이 순간적으로 false를 반환해도
+            // focusWithLeakGuard(readOnly)로 빠지지 않아 키보드가 내려가지 않는다.
+            maybeAdvance(true);
         });
 
         input.addEventListener('keydown', (e) => {
@@ -1235,9 +1249,12 @@ function focusWithLeakGuard(target, guardMs = 250) {
 
 // 자동 이동용 포커스 이동. iOS 소프트 키보드는 사용자 제스처 안에서 동기 focus 해야
 // 키보드가 유지되므로 분기한다(Tab 이동 로직과 동일한 정책).
-function moveFocusTo(target) {
+// softKeyboardActive: 호출부에서 소프트 키보드가 확실히 활성 상태임을 알고 있을 때 true.
+// 페이지 하단 근처에서 isSoftKeyboardVisible()이 순간적으로 false를 반환해도
+// readOnly 가드(focusWithLeakGuard) 경로로 빠지지 않아 키보드가 내려가지 않는다.
+function moveFocusTo(target, softKeyboardActive = false) {
     if (IS_IOS_LIKE) {
-        if (isSoftKeyboardVisible()) {
+        if (softKeyboardActive || isSoftKeyboardVisible()) {
             target.focus();
         } else {
             focusWithLeakGuard(target);

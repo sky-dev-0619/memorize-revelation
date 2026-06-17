@@ -793,6 +793,64 @@ body.modal-open {
     font-weight: 500;
 }
 
+/* 알림/확인 다이얼로그 */
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.dialog-box {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 48px rgba(15, 15, 15, 0.2), 0 0 0 1px var(--border);
+    max-width: 360px;
+    width: 100%;
+    padding: 28px 24px 20px;
+    animation: dialogPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dialogPop {
+    from {
+        opacity: 0;
+        transform: scale(0.88) translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.dialog-message {
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0 0 20px;
+    text-align: center;
+    word-break: keep-all;
+}
+
+.dialog-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.dialog-buttons .btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
 /* 모달 팝업 스타일 */
 .modal {
     position: fixed;
@@ -921,6 +979,15 @@ body.modal-open {
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
+    .dialog-box {
+        padding: 22px 18px 16px;
+    }
+
+    .dialog-buttons .btn {
+        padding: 10px 12px;
+        font-size: 0.875rem;
+    }
+
     .container {
         padding: 15px;
     }

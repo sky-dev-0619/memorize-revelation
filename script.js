@@ -43,6 +43,74 @@ const questionContent = document.getElementById('questionContent');
 const blankTestContent = document.getElementById('blankTestContent');
 const answerContent = document.getElementById('answerContent');
 const gradeContent = document.getElementById('gradeContent');
+const dialogModal = document.getElementById('dialogModal');
+const dialogMessage = document.getElementById('dialogMessage');
+const dialogButtons = document.getElementById('dialogButtons');
+
+// ── 커스텀 다이얼로그 ──────────────────────────────────────────────────────────
+
+let _dialogResolve = null;
+
+function _openDialog(message, buttons) {
+    dialogMessage.innerHTML = message;
+    dialogButtons.innerHTML = '';
+
+    buttons.forEach(({ label, value, primary }) => {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.className = primary ? 'btn btn-primary' : 'btn btn-secondary';
+        btn.addEventListener('click', () => _closeDialog(value));
+        dialogButtons.appendChild(btn);
+    });
+
+    dialogModal.classList.remove('hidden');
+    // 첫 번째 버튼에 포커스
+    const firstBtn = dialogButtons.querySelector('.btn-primary, .btn');
+    if (firstBtn) firstBtn.focus();
+
+    return new Promise(resolve => { _dialogResolve = resolve; });
+}
+
+function _closeDialog(value) {
+    dialogModal.classList.add('hidden');
+    if (_dialogResolve) {
+        _dialogResolve(value);
+        _dialogResolve = null;
+    }
+}
+
+// 오버레이 클릭 시 닫기 (confirm은 false, alert은 undefined로 처리)
+dialogModal.addEventListener('click', e => {
+    if (e.target === dialogModal) _closeDialog(false);
+});
+
+// 키보드 핸들러
+document.addEventListener('keydown', e => {
+    if (dialogModal.classList.contains('hidden')) return;
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        // 포커스된 버튼이 있으면 그 버튼, 없으면 primary 버튼
+        const focused = dialogButtons.querySelector(':focus');
+        const target = focused || dialogButtons.querySelector('.btn-primary') || dialogButtons.querySelector('.btn');
+        if (target) target.click();
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        _closeDialog(false);
+    }
+});
+
+function showAlert(message) {
+    return _openDialog(message, [
+        { label: '확인', value: true, primary: true }
+    ]);
+}
+
+function showConfirm(message) {
+    return _openDialog(message, [
+        { label: '취소', value: false, primary: false },
+        { label: '확인', value: true, primary: true }
+    ]);
+}
 
 // 초기화
 document.addEventListener('DOMContentLoaded', async function() {
@@ -247,7 +315,7 @@ function validateEndRange() {
     }
 }
 
-function generateQuestion() {
+async function generateQuestion() {
     const startChapter = parseInt(chapterStartSelect.value);
     const startVerse = parseInt(verseStartSelect.value);
     const endChapter = parseInt(chapterEndSelect.value);
@@ -265,7 +333,7 @@ function generateQuestion() {
     
     // 범위 검증
     if (!validateRange(startChapter, startVerse, endChapter, endVerse)) {
-        alert('올바른 범위를 선택해주세요.');
+        await showAlert('올바른 범위를 선택해주세요.');
         return;
     }
     
@@ -573,7 +641,7 @@ function displayQuestion(question) {
 }
 
 // 백지시험 생성 함수
-function generateBlankTest() {
+async function generateBlankTest() {
     const startChapter = parseInt(chapterStartSelect.value);
     const startVerse = parseInt(verseStartSelect.value);
     const endChapter = parseInt(chapterEndSelect.value);
@@ -581,7 +649,7 @@ function generateBlankTest() {
     
     // 범위 검증
     if (!validateRange(startChapter, startVerse, endChapter, endVerse)) {
-        alert('올바른 범위를 선택해주세요.');
+        await showAlert('올바른 범위를 선택해주세요.');
         return;
     }
     
@@ -663,7 +731,7 @@ function displayBlankTest(blankTest) {
     setupPcFocusScroll(Array.from(blankTestContent.querySelectorAll('.blank-test-input')));
 }
 
-function showAnswer() {
+async function showAnswer() {
     let verses = [];
     
     if (currentQuestion) {
@@ -671,7 +739,7 @@ function showAnswer() {
     } else if (currentBlankTest) {
         verses = currentBlankTest.verses;
     } else {
-        alert('먼저 문제를 생성해주세요.');
+        await showAlert('먼저 문제를 생성해주세요.');
         return;
     }
     
@@ -694,7 +762,7 @@ function showAnswer() {
     openAnswerModal();
 }
 
-function gradeAnswers() {
+async function gradeAnswers() {
     let totalBlanks = 0;
     let correctAnswers = 0;
     let results = [];
@@ -781,7 +849,7 @@ function gradeAnswers() {
         // 빈칸문제 점수 표시 업데이트
         updateScoreDisplay(correctAnswers, totalBlanks);
     } else {
-        alert('먼저 문제를 생성해주세요.');
+        await showAlert('먼저 문제를 생성해주세요.');
         return;
     }
     
@@ -981,14 +1049,18 @@ function clearAllBlanks() {
     gradeArea.classList.add('hidden');
 }
 
-function handleRangeChange(event) {
+async function handleRangeChange(event) {
+    // await 전에 target을 미리 저장 (이벤트 객체는 async 후에도 유효하지만 명시적으로 캐싱)
+    const target = event.target;
+
     // 문제가 생성된 상태인지 확인
     const hasActiveQuestion = (currentQuestion && !questionArea.classList.contains('hidden')) || 
                              (currentBlankTest && !blankTestArea.classList.contains('hidden'));
     
     if (hasActiveQuestion) {
         // 범위 재설정 확인 팝업
-        if (confirm('범위를 재설정하시겠습니까? 현재 문제가 초기화됩니다.')) {
+        const confirmed = await showConfirm('범위를 재설정하시겠습니까? <br/>현재 문제가 초기화됩니다.');
+        if (confirmed) {
             resetToInitialState();
             // 새로운 값으로 업데이트
             updatePreviousRangeValues();
@@ -1003,13 +1075,13 @@ function handleRangeChange(event) {
     }
     
     // 범위 변경에 따른 기존 로직 실행
-    if (event.target === chapterStartSelect) {
+    if (target === chapterStartSelect) {
         updateStartVerseSelector();
-    } else if (event.target === verseStartSelect) {
+    } else if (target === verseStartSelect) {
         updateEndRangeOptions();
-    } else if (event.target === chapterEndSelect) {
+    } else if (target === chapterEndSelect) {
         updateEndVerseForRange();
-    } else if (event.target === verseEndSelect) {
+    } else if (target === verseEndSelect) {
         validateEndRange();
     }
 }
